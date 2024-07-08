@@ -1,0 +1,21 @@
+[package]
+name = "chess_compress_urlsafe"
+version = "0.0.1"
+authors = ["StephanS <simon.void+github@gmail.com>"]
+description = "de/compresses moves played in a chess game from/to a url-safe string"
+license = "MIT"
+repository = "https://github.com/simon-void/chess_compress_base64"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tinyvec  = { version = "1.6.1", features = ["alloc"] }
+serde = { version = "1.0.203", features = ["derive"] }
+itertools = "0.13.0"
+regex = "1.10.5"
+once_cell = "1.19.0"
+
+[dev-dependencies]
+rstest = "0.21.0"
+
