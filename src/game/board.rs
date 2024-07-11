@@ -1,9 +1,10 @@
 use crate::figure::{Figure, FigureType};
-use crate::base::{Color, Position, Direction};
+use crate::base::{Position, Direction};
 use crate::base::I8_RANGE_07;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::Range;
 use tinyvec::alloc::slice::Iter;
+use crate::base::color::Color;
 use crate::game::board_state::BoardState;
 
 static WHITE_PAWN: Figure = Figure {fig_type:FigureType::Pawn, color: Color::White,};

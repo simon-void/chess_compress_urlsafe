@@ -1,5 +1,6 @@
 use crate::game::{Board, GameState};
-use crate::base::{Color, STRAIGHT_DIRECTIONS, DIAGONAL_DIRECTIONS, Direction, Position};
+use crate::base::{STRAIGHT_DIRECTIONS, DIAGONAL_DIRECTIONS, Direction, Position};
+use crate::base::color::Color;
 use crate::figure::{Figure, FigureType};
 
 

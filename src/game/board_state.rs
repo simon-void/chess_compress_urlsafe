@@ -1,6 +1,6 @@
 use tinyvec::*;
-use crate::game::{StoppedReason, MoveData};
-use crate::base::Color;
+use crate::game::MoveData;
+use crate::base::color::Color;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Default)]
 pub struct BoardState {
@@ -163,18 +163,20 @@ impl BoardStates {
             new_white_board_states_history.len(),
             new_black_board_states_history.len(),
         );
-
-        if new_white_board_states_history.len() == 50 && new_black_board_states_history.len() == 50 {
-            Err(StoppedReason::NoChangeIn50Moves)
-        } else {
-            Ok(BoardStates {
-                white_board_states_history: new_white_board_states_history,
-                black_board_states_history: new_black_board_states_history,
-            })
-        }
+        Ok(BoardStates {
+            white_board_states_history: new_white_board_states_history,
+            black_board_states_history: new_black_board_states_history,
+        })
     }
 
     pub fn count_half_moves_without_progress(&self) -> usize {
         self.white_board_states_history.len() + self.black_board_states_history.len() - 1
     }
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub enum StoppedReason {
+    KingInCheckAfterMove,
+    InsufficientMaterial,
+    ThreeTimesRepetition,
 }

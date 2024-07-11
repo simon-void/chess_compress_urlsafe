@@ -1,4 +1,4 @@
-use crate::base::Color;
+use crate::base::color::Color;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum Direction {

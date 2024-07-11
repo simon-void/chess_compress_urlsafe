@@ -1,5 +1,4 @@
 use std::fmt::*;
-use crate::game::StoppedReason;
 
 #[derive(Debug)]
 pub struct ChessError {
@@ -15,7 +14,6 @@ impl Display for ChessError {
 
 #[derive(Debug)]
 pub enum ErrorKind {
-    HighLevelErr(StoppedReason),
     IllegalConfig,
     IllegalFormat,
     IllegalMove,

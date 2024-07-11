@@ -2,13 +2,12 @@ use std::fmt;
 use std::str;
 use crate::base::position::Position;
 use tinyvec::TinyVec;
-use crate::base::{ChessError, ErrorKind};
 use tinyvec::alloc::fmt::Formatter;
-use crate::figure::FigureType;
 use std::hash::{Hash, Hasher};
 use serde::Serialize;
-use crate::base::MoveType::{Castling, EnPassant, Normal, PawnPromotion};
-
+use crate::base::errors::{ChessError, ErrorKind};
+use crate::base::a_move::MoveType::{Castling, EnPassant, Normal, PawnPromotion};
+use crate::figure::FigureType;
 
 // TODO MoveData should implement Claim as soon as it's added to the language.
 // see https://smallcultfollowing.com/babysteps/blog/2024/06/21/claim-auto-and-otherwise/
@@ -79,8 +78,8 @@ impl MoveData {
             figure_captured: None,
             move_type: Castling {
                 c_type: castling_type,
-                kingMove: FromTo::new(king_from, king_to),
-                rookMove: FromTo::new(rook_from, rook_to),
+                king_move: FromTo::new(king_from, king_to),
+                rook_move: FromTo::new(rook_from, rook_to),
             },
         }
     }
@@ -108,19 +107,19 @@ impl Hash for FromTo {
 }
 
 impl FromTo {
-    pub fn new(from: Position, to: Position) -> FromTo {
-        FromTo {
+    pub fn new(from: Position, to: Position) -> Self {
+        Self {
             from,
             to,
         }
     }
 
-    pub fn from_code(code: &str) -> FromTo {
+    pub fn from_code(code: &str) -> Self {
         code.parse::<FromTo>().unwrap_or_else(|_| panic!("illegal Move code: {}", code))
     }
 
-    pub fn toggle_rows(&self) -> FromTo {
-        FromTo {
+    pub fn toggle_rows(&self) -> Self {
+        Self {
             from: self.from.toggle_row(),
             to: self.to.toggle_row(),
         }
@@ -175,6 +174,15 @@ impl Move {
         Move {
             from_to,
             promotion_type: Some(promotion_type),
+        }
+    }
+
+
+
+    pub fn toggle_rows(&self) -> Self {
+        Self {
+            from_to: self.from_to.toggle_rows(),
+            promotion_type: self.promotion_type,
         }
     }
 }
@@ -236,6 +244,10 @@ impl Serialize for Move {
         S: serde::Serializer {
         serializer.serialize_str(&format!("{}", self))
     }
+}
+
+pub fn toggle_rows(moves: &Vec<Move>) -> Vec<Move> {
+    moves.iter().map(|a_move| a_move.toggle_rows()).collect()
 }
 
 pub const EXPECTED_MAX_NUMBER_OF_MOVES: usize = 80;
@@ -350,5 +362,5 @@ pub enum MoveType {
     Normal,
     PawnPromotion{ promoted_to: PromotionType },
     EnPassant { captured_pawn_pos: Position },
-    Castling { c_type: CastlingType, kingMove: FromTo, rookMove: FromTo }
+    Castling { c_type: CastlingType, king_move: FromTo, rook_move: FromTo }
 }

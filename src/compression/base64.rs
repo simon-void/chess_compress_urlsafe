@@ -1,7 +1,6 @@
-use once_cell::sync::Lazy;
+use std::sync::OnceLock;
 use regex::Regex;
 use crate::base::{ChessError, ErrorKind, Position};
-
 // using url safe base 64 encoding without the padding character since it's not needed
 // since a chessboard has 64 fields so the index of a field takes exactly 6bits or one base64 value.
 //
@@ -105,13 +104,21 @@ pub fn decode_base64(character: char) -> Result<Position, ChessError> {
 }
 
 pub fn encode_base64(position: Position) -> char {
-    static URL_SAFE_BASE64_CHARS: Lazy<[char; 64]> = Lazy::new(|| ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_']);
-    URL_SAFE_BASE64_CHARS[position.index]
+    static ONCE: OnceLock<[char; 64]> = OnceLock::new();
+    let url_safe_base64_chars: &[char; 64] = ONCE.get_or_init(|| {
+        ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_']
+    });
+    url_safe_base64_chars[position.index]
 }
 
 pub fn assert_is_url_safe_base64(str: &str) -> Result<(), ChessError> {
-    static URL_SAFE_BASE64_REGEX: Lazy<Regex> = Lazy::new(|| Regex::new(r"^([a-z]|[A-Z]|[0-9]|-|_)*$").unwrap());
-    if URL_SAFE_BASE64_REGEX.is_match(str) {
+    // OnceCell is not thread-safe! for that use OnceLock
+    static ONCE: OnceLock<Regex> = OnceLock::new();
+    let url_safe_base64_regex: &Regex = ONCE.get_or_init(|| {
+        Regex::new(r"^([a-z]|[A-Z]|[0-9]|-|_)*$").unwrap()
+    });
+
+    if url_safe_base64_regex.is_match(str) {
         Ok(())
     } else {
         Err(ChessError {

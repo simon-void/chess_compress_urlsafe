@@ -1,7 +1,8 @@
-use crate::base::{ChessError, Color, ErrorKind, Move, Position};
+use crate::base::{ChessError, ErrorKind, Move, Position};
 use crate::compression::base64::encode_base64;
 use crate::figure::functions::is_reachable_by::get_positions_to_reach_target_from;
 use crate::game::GameState;
+use crate::base::color::Color;
 
 
 pub fn compress(moves: Vec<Move>) -> Result<String, ChessError> {

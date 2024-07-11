@@ -1,9 +1,11 @@
-use crate::base::{Color, Position, FromTo, MoveData, MoveType, Moves, ChessError, ErrorKind, Direction, Disallowable, Move, PromotionType};
+use crate::base::{Position, FromTo, MoveData, MoveType, Moves, ChessError, ErrorKind, Direction, Move, PromotionType};
 use crate::figure::{Figure, FigureType, FigureAndPosition};
 use crate::game::{Board, CaptureInfoOption};
 use tinyvec::*;
 use std::{fmt,str};
 use crate::base::CastlingType::{KingSide, QueenSide};
+use crate::base::color::Color;
+use crate::base::util::Disallowable;
 
 #[derive(Clone, Debug)]
 pub struct GameState {
@@ -303,7 +305,7 @@ impl GameState {
                         } else {
                             KingSide
                         };
-                        MoveType::Castling { c_type: castling_type, kingMove: effective_king_move, rookMove: rook_move }
+                        MoveType::Castling { c_type: castling_type, king_move: effective_king_move, rook_move: rook_move }
                     } else {
                         MoveType::Normal
                     };
@@ -365,7 +367,7 @@ impl GameState {
                     PawnMoveType::Promotion(promotion_type) => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
-                        let mut stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type);
+                        let stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -375,7 +377,7 @@ impl GameState {
                     PawnMoveType::SingleStep => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
-                        let mut stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type());
+                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type());
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -384,7 +386,7 @@ impl GameState {
                     },
                     PawnMoveType::DoubleStep => {
                         do_normal_move(&mut new_board, next_move.from_to);
-                        let mut stats = MoveData::new(next_move.from_to, FigureType::Pawn, None);
+                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, None);
                         (
                             self.white_king_pos, self.black_king_pos,
                             Some(Position::new_unchecked(
@@ -691,13 +693,15 @@ mod tests {
                 is_white_king_side_castling_still_allowed: self.is_black_king_side_castling_still_allowed,
                 is_black_queen_side_castling_still_allowed: self.is_white_queen_side_castling_still_allowed,
                 is_black_king_side_castling_still_allowed: self.is_white_king_side_castling_still_allowed,
-                moves_played: self.moves_played.toggle_rows(),
+                moves_played: toggle_rows(&self.moves_played),
             }
         }
     }
 
     use super::*;
     use rstest::*;
+    use crate::base::color::Color;
+    use crate::base::toggle_rows;
     use crate::game::{GameState};
 
     //♔♕♗♘♖♙♚♛♝♞♜♟
@@ -829,8 +833,8 @@ mod tests {
         let game_state = game_state_config.parse::<GameState>().unwrap();
         let promoting_move = promoting_move_str.parse::<Move>().unwrap();
         let expected_color_of_promoted_figure = game_state.turn_by;
-        let expected_promo_figure_type = if let MoveType::PawnPromotion(promo_type) = promoting_move.promotion_type {
-            promo_type.get_figure_type()
+        let expected_promo_figure_type = if let MoveType::PawnPromotion{promoted_to} = promoting_move.promotion_type {
+            promoted_to.get_figure_type()
         } else {
             panic!("expected move that includes a pawn promotion, but got {}", promoting_move_str)
         };
@@ -878,7 +882,7 @@ mod tests {
         expected_moves_played: &str,
     ) {
         let game_state = game_config_testing.parse::<GameState>().unwrap();
-        let actual_moves_played = game_state.get_moves_played();
+        let actual_moves_played: Vec<Move> = game_state.get_moves_played();
         assert_eq!(actual_moves_played, expected_moves_played.to_string(), "moves played");
     }
 }

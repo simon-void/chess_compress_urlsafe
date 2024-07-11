@@ -3,9 +3,10 @@ use std::iter::{Iterator};
 use std::ops::Range;
 use std::str;
 use serde::Serialize;
-use crate::base::{Color, ChessError, ErrorKind};
+use crate::base::{ChessError, ErrorKind};
 use crate::game::{Board, FieldContent, USIZE_RANGE_063};
 use tinyvec::alloc::fmt::Formatter;
+use crate::base::color::Color;
 use crate::base::direction::Direction;
 
 #[derive(Copy, Clone, Eq)]

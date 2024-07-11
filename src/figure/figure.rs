@@ -1,6 +1,3 @@
-pub mod functions;
-pub mod figure;
-
 use std::fmt;
 use crate::base::*;
 use std::str;
