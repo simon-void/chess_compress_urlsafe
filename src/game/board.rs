@@ -1,11 +1,9 @@
-use crate::figure::{Figure, FigureType};
-use crate::base::{Position, Direction};
-use crate::base::I8_RANGE_07;
 use std::fmt::{Display, Formatter, Result};
 use std::ops::Range;
-use tinyvec::alloc::slice::Iter;
 use crate::base::color::Color;
-use crate::game::board_state::BoardState;
+use crate::base::direction::Direction;
+use crate::base::position::{I8_RANGE_07, Position};
+use crate::figure::figure::{Figure, FigureType};
 
 static WHITE_PAWN: Figure = Figure {fig_type:FigureType::Pawn, color: Color::White,};
 static WHITE_QUEEN_SIDE_ROOK: Figure = Figure {fig_type:FigureType::Rook, color: Color::White,};
@@ -228,46 +226,6 @@ impl Board {
         }
     }
 
-    pub fn encode(&self) -> BoardState {
-        // encodes an optional figure into an u64 that is guaranteed to only use its 4 lowest bytes
-        fn encode_opt_figure(opt_figure: &Option<Figure>) -> u64 {
-            match opt_figure {
-                None => { 0 }
-                Some(figure) => {
-                    let type_value = match figure.fig_type {
-                        FigureType::Pawn => { 1 }
-                        FigureType::Rook => { 2 }
-                        FigureType::Knight => { 3 }
-                        FigureType::Bishop => { 4 }
-                        FigureType::Queen => { 5 }
-                        FigureType::King => { 6 }
-                    };
-                    if figure.color == Color::White {
-                        8 + type_value
-                    } else {
-                        type_value
-                    }
-                }
-            }
-        }
-        fn encode_figure_slice(slice_of_16_figures: &[Option<Figure>]) -> u64 {
-            let mut opt_fig_iter: Iter<Option<Figure>> = slice_of_16_figures.iter();
-            let mut slice_compacted = opt_fig_iter.next().map(encode_opt_figure).unwrap_or(0);
-            for next_opt_fig in opt_fig_iter {
-                slice_compacted <<= 4;
-                slice_compacted += encode_opt_figure(next_opt_fig);
-            }
-            slice_compacted
-        }
-
-        BoardState::new([
-            encode_figure_slice(&self.state[0..16]),
-            encode_figure_slice(&self.state[16..32]),
-            encode_figure_slice(&self.state[32..48]),
-            encode_figure_slice(&self.state[48..64]),
-        ])
-    }
-
     pub fn get_fen_part1(&self) -> String {
         let mut fen_part1 = String::with_capacity(72);
         let mut index_range_end: usize = 64;
@@ -364,44 +322,41 @@ impl CaptureInfoOption {
 #[cfg(test)]
 mod tests {
     use rstest::*;
-    use crate::game::{GameState};
-
+    use crate::game::game_state::GameState;
     //♔♕♗♘♖♙♚♛♝♞♜♟
 
     #[rstest(
-    game_config, expected_fen_part1,
-    case("", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"),
-    case("e2-e4", "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"),
-    case("b1-a3 g8-h6 e2-e4", "rnbqkb1r/pppppppp/7n/8/4P3/N7/PPPP1PPP/R1BQKBNR"),
-    ::trace //This leads to the arguments being printed in front of the test result.
+        game_state, expected_fen_part1,
+        case("", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"),
+        case("e2e4", "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"),
+        case("b1a3 g8h6 e2e4", "rnbqkb1r/pppppppp/7n/8/4P3/N7/PPPP1PPP/R1BQKBNR"),
+        ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_get_fen_part1(
-        game_config: &str,
+        game_state: GameState,
         expected_fen_part1: &str,
     ) {
-        let game_state = game_config.parse::<GameState>().unwrap();
         let actual_fen_part1 = game_state.board.get_fen_part1();
         assert_eq!(actual_fen_part1, String::from(expected_fen_part1));
     }
 
     #[rstest(
-    game_config, expected_nr_of_figures,
-    case("e2-e4", 32),
-    case("e2-e4 d7-d5 e4-d5", 31), // capture
-    case("a2-a4 h7-h6 a4-a5 b7-b5 a5-b6", 31), // capture en passant
-    case("a2-a4 h7-h6 a4-a5 b7-b5 a5-b6 h6-h5 b6-b7 b8-c6 b7Qb8", 31), // pawn promotion without capture
-    case("a2-a4 h7-h6 a4-a5 b7-b5 a5-b6 h6-h5 b6-b7 b8-c6 b7Qa8", 30), // pawn promotion with capture
-    case("g2-g3 a7-a6 f1-g2 a6-a5 g1-f3 a5-a4 e1cg1", 32),             // short castling
-    case("d2-d3 a7-a6 c1-f4 a6-a5 d1-d2 a5-a4 b1-c3 a4-a3 e1Cc1", 32), // long castling
-    case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", 6),
-    case("black ♖a1 ♔e1 ♚e8", 3),
-    ::trace //This leads to the arguments being printed in front of the test result.
+        game_state, expected_nr_of_figures,
+        case("e2e4", 32),
+        case("e2e4 d7d5 e4d5", 31), // capture
+        case("a2a4 h7h6 a4a5 b7b5 a5b6", 31), // capture en passant
+        case("a2a4 h7h6 a4a5 b7b5 a5b6 h6h5 b6b7 b8c6 b7b8Q", 31), // pawn promotion without capture
+        case("a2a4 h7h6 a4a5 b7b5 a5b6 h6h5 b6b7 b8c6 b7a8Q", 30), // pawn promotion with capture
+        case("g2g3 a7a6 f1g2 a6a5 g1f3 a5a4 e1h1", 32),             // short castling
+        case("d2d3 a7a6 c1f4 a6a5 d1d2 a5a4 b1c3 a4a3 e1a1", 32), // long castling
+        case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", 6),
+        case("black ♖a1 ♔e1 ♚e8", 3),
+        ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_number_of_figures(
-        game_config: &str,
+        game_state: GameState,
         expected_nr_of_figures: isize,
     ) {
-        let game_state = game_config.parse::<GameState>().unwrap();
         let actual_nr_of_figures = game_state.board.number_of_figures;
         assert_eq!(actual_nr_of_figures, expected_nr_of_figures);
     }

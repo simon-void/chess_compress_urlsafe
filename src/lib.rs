@@ -1,4 +1,4 @@
 pub mod base;
-pub mod figure;
-pub mod game;
-mod compression;
+mod figure;
+mod game;
+pub mod compression;

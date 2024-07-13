@@ -7,7 +7,7 @@ use std::hash::{Hash, Hasher};
 use serde::Serialize;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::a_move::MoveType::{Castling, EnPassant, Normal, PawnPromotion};
-use crate::figure::FigureType;
+use crate::figure::figure::FigureType;
 
 // TODO MoveData should implement Claim as soon as it's added to the language.
 // see https://smallcultfollowing.com/babysteps/blog/2024/06/21/claim-auto-and-otherwise/
@@ -132,7 +132,7 @@ impl str::FromStr for FromTo {
     fn from_str(code: &str) -> Result<Self, Self::Err> {
         Ok(FromTo {
             from: code[0..2].parse::<Position>()?,
-            to: code[3..5].parse::<Position>()?,
+            to: code[2..4].parse::<Position>()?,
         })
     }
 }
@@ -363,4 +363,46 @@ pub enum MoveType {
     PawnPromotion{ promoted_to: PromotionType },
     EnPassant { captured_pawn_pos: Position },
     Castling { c_type: CastlingType, king_move: FromTo, rook_move: FromTo }
+}
+
+
+//------------------------------Tests------------------------
+
+#[cfg(test)]
+mod tests {
+    use rstest::*;
+    use crate::base::a_move::{FromTo, Move};
+    use crate::base::position::Position;
+
+    #[rstest(
+        from_to, from, to,
+        case("b1c3", "b1", "c3"),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_fromto_from_str(
+        from_to: FromTo,
+        from: Position,
+        to: Position,
+    ) {
+        assert_eq!(from, from_to.from);
+        assert_eq!(to, from_to.to);
+    }
+
+
+    #[rstest(
+        a_move, from, to, promotes,
+        case("b1c3", "b1", "c3", false),
+        case("g7f8Q", "g7", "f8", true),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_move_from_str(
+        a_move: Move,
+        from: Position,
+        to: Position,
+        promotes: bool,
+    ) {
+        assert_eq!(from, a_move.from_to.from);
+        assert_eq!(to, a_move.from_to.to);
+        assert_eq!(promotes, a_move.promotion_type.is_some());
+    }
 }

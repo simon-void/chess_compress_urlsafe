@@ -38,11 +38,6 @@ impl Direction {
     }
 }
 
-pub static ALL_DIRECTIONS: [Direction; 8] = [
-    Direction::Up, Direction::UpRight, Direction::Right, Direction::DownRight,
-    Direction::Down, Direction::DownLeft, Direction::Left, Direction::UpLeft
-];
-
 pub static STRAIGHT_DIRECTIONS: [Direction; 4] = [
     Direction::Up, Direction::Right, Direction::Down, Direction::Left
 ];

@@ -1,6 +1,7 @@
 use std::sync::OnceLock;
 use regex::Regex;
-use crate::base::{ChessError, ErrorKind, Position};
+use crate::base::errors::{ChessError, ErrorKind};
+use crate::base::position::Position;
 // using url safe base 64 encoding without the padding character since it's not needed
 // since a chessboard has 64 fields so the index of a field takes exactly 6bits or one base64 value.
 //

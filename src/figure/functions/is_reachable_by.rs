@@ -1,8 +1,9 @@
-use crate::game::{Board, GameState};
-use crate::base::{STRAIGHT_DIRECTIONS, DIAGONAL_DIRECTIONS, Direction, Position};
 use crate::base::color::Color;
-use crate::figure::{Figure, FigureType};
-
+use crate::base::direction::{DIAGONAL_DIRECTIONS, Direction, STRAIGHT_DIRECTIONS};
+use crate::base::position::Position;
+use crate::figure::figure::{Figure, FigureType};
+use crate::game::board::Board;
+use crate::game::game_state::GameState;
 
 pub fn get_positions_to_reach_target_from(
     target: Position,
@@ -137,7 +138,6 @@ struct FoundFigure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use tinyvec::*;
 
     #[test]
     fn testing_for_get_positions_to_reach_target_from() {

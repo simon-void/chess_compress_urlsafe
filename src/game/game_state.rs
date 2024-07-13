@@ -1,11 +1,14 @@
-use crate::base::{Position, FromTo, MoveData, MoveType, Moves, ChessError, ErrorKind, Direction, Move, PromotionType};
-use crate::figure::{Figure, FigureType, FigureAndPosition};
-use crate::game::{Board, CaptureInfoOption};
 use tinyvec::*;
 use std::{fmt,str};
-use crate::base::CastlingType::{KingSide, QueenSide};
+use crate::base::a_move::{FromTo, Move, MoveData, Moves, MoveType, PromotionType};
+use crate::base::a_move::CastlingType::{KingSide, QueenSide};
 use crate::base::color::Color;
+use crate::base::direction::Direction;
+use crate::base::errors::{ChessError, ErrorKind};
+use crate::base::position::Position;
 use crate::base::util::Disallowable;
+use crate::figure::figure::{Figure, FigureAndPosition, FigureType};
+use crate::game::board::{Board, CaptureInfoOption};
 
 #[derive(Clone, Debug)]
 pub struct GameState {
@@ -523,7 +526,8 @@ impl str::FromStr for GameState {
         let token_iter = trimmed_desc.split(' ');
 
         // let desc_contains_figures: bool = "♔♕♗♘♖♙♚♛♝♞♜♟".chars().any(|symbol|{desc.contains(symbol)});
-        let desc_contains_moves: bool = trimmed_desc.is_empty() || trimmed_desc.contains('-');
+        let desc_contains_moves: bool = trimmed_desc.is_empty() || !(trimmed_desc.starts_with("white") || trimmed_desc.starts_with("black"));
+        println!("'{desc_contains_moves}', '{trimmed_desc}'");
         if desc_contains_moves {
             game_by_moves_from_start(token_iter)
         } else {
@@ -652,10 +656,6 @@ impl fmt::Display for GameState {
     }
 }
 
-pub fn concat_main_moves(stats: Vec<MoveData>) -> String {
-    stats.iter().map(|move_stats| move_stats.given_move.to_string()).collect::<Vec<String>>().join(",")
-}
-
 pub static WHITE_KING_STARTING_POS: Position = Position::new_unchecked(4, 0);
 static WHITE_KING_SIDE_ROOK_STARTING_POS: Position = Position::new_unchecked(7, 0);
 static WHITE_QUEEN_SIDE_ROOK_STARTING_POS: Position = Position::new_unchecked(0, 0);
@@ -701,14 +701,26 @@ mod tests {
     use itertools::Itertools;
     use super::*;
     use rstest::*;
+    use crate::base::a_move::toggle_rows;
     use crate::base::color::Color;
-    use crate::base::toggle_rows;
-    use crate::game::{GameState};
 
     //♔♕♗♘♖♙♚♛♝♞♜♟
 
     #[rstest(
-        game_config_testing, expected_nr_of_reachable_moves,
+        _game_state,
+        case(""),
+        case("e2e4 e7e5"),
+        case("white ♖a1 ♔e1 ♖h1 ♙a2 ♜h2 ♚e8"),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_game_from_str(
+        _game_state: GameState,
+    ) {}
+
+    //♔♕♗♘♖♙♚♛♝♞♜♟
+
+    #[rstest(
+        game_state, expected_nr_of_reachable_moves,
         case("", 20),
         case("e2e4 e7e5", 29),
         case("e2e4 a7a6", 30),
@@ -723,10 +735,9 @@ mod tests {
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_get_reachable_moves(
-        game_config_testing: &str,
+        game_state: GameState,
         expected_nr_of_reachable_moves: usize,
     ) {
-        let game_state = game_config_testing.parse::<GameState>().unwrap();
         let white_nr_of_reachable_moves = game_state.get_reachable_moves().len();
         assert_eq!(white_nr_of_reachable_moves, expected_nr_of_reachable_moves, "nr of reachable moves");
 
@@ -737,7 +748,7 @@ mod tests {
     //♔♕♗♘♖♙♚♛♝♞♜♟
 
     #[rstest(
-        game_config_testing, next_move_str, expected_catches_figure,
+        game_state, next_move_str, expected_catches_figure,
         case("white ♔e1 ♖h1 ♙a2 ♜h2 ♚e8", "e1d1", false),
         case("white ♔e1 ♖h1 ♙a2 ♜h2 ♚e8", "e1g1", false),
         case("white ♔e1 ♖h1 ♙a2 ♜h2 ♚e8", "a2a3", false),
@@ -748,11 +759,10 @@ mod tests {
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_do_move_catches_figure(
-        game_config_testing: &str,
+        game_state: GameState,
         next_move_str: &str,
         expected_catches_figure: bool,
     ) {
-        let game_state = game_config_testing.parse::<GameState>().unwrap();
         let white_move = next_move_str.parse::<Move>().unwrap();
         let ( _, move_stats) = game_state.do_move(white_move);
         assert_eq!(move_stats.did_catch_figure(), expected_catches_figure, "white catches figure");
@@ -782,21 +792,20 @@ mod tests {
     }
 
     #[rstest(
-        game_state_config, expected_color,
+        game_state, expected_color,
         case("black ♔b6 ♙a7 ♚a8", Color::Black),
         case("white ♔h8 ♚f8 ♜e7 ♟e6 ♟d7", Color::White),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_turn_by(
-        game_state_config: &str,
+        game_state: GameState,
         expected_color: Color,
     ) {
-        let game_state = game_state_config.parse::<GameState>().unwrap();
         assert_eq!(game_state.turn_by, expected_color);
     }
 
     #[rstest(
-        game_state_config, promoting_move_str,
+        game_state, promoting_move,
         case("white ♔b6 ♙a7 ♚h6", "a7a8Q"),
         case("white ♔b6 ♙a7 ♚h6", "a7a8R"),
         case("white ♔b6 ♙a7 ♚h6", "a7a8K"),
@@ -805,16 +814,14 @@ mod tests {
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_pawn_promo_works(
-        game_state_config: &str,
-        promoting_move_str: &str,
+        game_state: GameState,
+        promoting_move: Move,
     ) {
-        let game_state = game_state_config.parse::<GameState>().unwrap();
-        let promoting_move = promoting_move_str.parse::<Move>().unwrap();
         let expected_color_of_promoted_figure = game_state.turn_by;
         let expected_promo_figure_type = if let Some(promoted_to) = promoting_move.promotion_type {
             promoted_to.get_figure_type()
         } else {
-            panic!("expected move that includes a pawn promotion, but got {}", promoting_move_str)
+            panic!("expected move that includes a pawn promotion, but got {}", promoting_move)
         };
         let (new_game_state, _) = game_state.do_move(promoting_move);
         let promoted_figure = new_game_state.board.get_figure(promoting_move.clone().from_to.to);
@@ -828,7 +835,7 @@ mod tests {
     }
 
     #[rstest(
-        game_state_config, castling_move_str, expected_updated_board_fen,
+        game_state, castling_move, expected_updated_board_fen,
         case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e1c1", "r3k2r/8/8/8/8/8/8/2KR3R"),
         case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e1g1", "r3k2r/8/8/8/8/8/8/R4RK1"),
         case("black ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e8c8", "2kr3r/8/8/8/8/8/8/R3K2R"),
@@ -836,30 +843,26 @@ mod tests {
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_castling_works(
-        game_state_config: &str,
-        castling_move_str: &str,
+        game_state: GameState,
+        castling_move: Move,
         expected_updated_board_fen: &str,
     ) {
-        let game_state = game_state_config.parse::<GameState>().unwrap();
-        let castling_move = castling_move_str.parse::<Move>().unwrap();
-
         let (new_game_state, _) = game_state.do_move(castling_move);
         let actual_updated_board_fen = new_game_state.board.get_fen_part1();
         assert_eq!(actual_updated_board_fen, expected_updated_board_fen);
     }
 
     #[rstest(
-        game_config_testing, expected_moves_played,
+        game_state, expected_moves_played,
         case("", ""),
         case("e2e4", "e2e4"),
         case("e2e4 e7e5 g1f3", "e2e4, e7e5, g1f3"),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_get_moves_played(
-        game_config_testing: &str,
+        game_state: GameState,
         expected_moves_played: &str,
     ) {
-        let game_state = game_config_testing.parse::<GameState>().unwrap();
         let actual_moves_played: String = game_state.get_moves_played().iter().map(|it|format!("{it}")).join(", ");
         assert_eq!(actual_moves_played, expected_moves_played.to_string(), "moves played");
     }
