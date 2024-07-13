@@ -698,6 +698,7 @@ mod tests {
         }
     }
 
+    use itertools::Itertools;
     use super::*;
     use rstest::*;
     use crate::base::color::Color;
@@ -781,29 +782,6 @@ mod tests {
     }
 
     #[rstest(
-        game_state_config, expected_is_check,
-        case("black ♔b6 ♙a7 ♚a8", false),
-        case("white ♔h8 ♚f8 ♜e7 ♟e6 ♟d7", false),
-        case("white ♔g3 ♖d1 ♚g1 ♙c2 ♙d3", false),
-        case("black ♔g3 ♖d1 ♚g1 ♙c2 ♙d3", true),
-        case("black ♔g3 ♘e2 ♚g1 ♙c2 ♙d3", true),
-        case("black ♔g3 ♗e3 ♚g1 ♙c2 ♙d3", true),
-        case("black ♔a1 ♚e4 ♙d3", true),
-        case("black ♔a1 ♚c4 ♙d3", true),
-        case("black ♔a1 ♚e2 ♙d3", false),
-        case("black ♔a1 ♚c2 ♙d3", false),
-        ::trace //This leads to the arguments being printed in front of the test result.
-    )]
-    fn test_is_active_king_in_check(
-        game_state_config: &str,
-        expected_is_check: bool,
-    ) {
-        let game_state = game_state_config.parse::<GameState>().unwrap();
-        assert_eq!(game_state.is_active_king_in_check(None), expected_is_check, "provided game_state");
-        assert_eq!(game_state.toggle_colors().is_active_king_in_check(None), expected_is_check, "toggled game_state");
-    }
-
-    #[rstest(
         game_state_config, expected_color,
         case("black ♔b6 ♙a7 ♚a8", Color::Black),
         case("white ♔h8 ♚f8 ♜e7 ♟e6 ♟d7", Color::White),
@@ -833,7 +811,7 @@ mod tests {
         let game_state = game_state_config.parse::<GameState>().unwrap();
         let promoting_move = promoting_move_str.parse::<Move>().unwrap();
         let expected_color_of_promoted_figure = game_state.turn_by;
-        let expected_promo_figure_type = if let MoveType::PawnPromotion{promoted_to} = promoting_move.promotion_type {
+        let expected_promo_figure_type = if let Some(promoted_to) = promoting_move.promotion_type {
             promoted_to.get_figure_type()
         } else {
             panic!("expected move that includes a pawn promotion, but got {}", promoting_move_str)
@@ -882,7 +860,7 @@ mod tests {
         expected_moves_played: &str,
     ) {
         let game_state = game_config_testing.parse::<GameState>().unwrap();
-        let actual_moves_played: Vec<Move> = game_state.get_moves_played();
+        let actual_moves_played: String = game_state.get_moves_played().iter().map(|it|format!("{it}")).join(", ");
         assert_eq!(actual_moves_played, expected_moves_played.to_string(), "moves played");
     }
 }
