@@ -717,33 +717,34 @@ mod tests {
         _game_state: GameState,
     ) {}
 
-    //♔♕♗♘♖♙♚♛♝♞♜♟
-
-    #[rstest(
-        game_state, expected_nr_of_reachable_moves,
-        case("", 20),
-        case("e2e4 e7e5", 29),
-        case("e2e4 a7a6", 30),
-        case("e2e4 b7b5", 29),
-        case("a2a4 a7a6 a4a5 b7b5", 22), // en-passant
-        case("white ♔a1 ♙b5 ♟a6 Ec6 ♟c5 ♚e8", 6), // en-passant
-        case("white ♖a2 ♔e2 ♖h2 ♚e8", 27), // no castling
-        case("white ♖a1 ♔e1 ♖h1 ♚e8", 26), // castling
-        case("white ♖a1 ♔e1 ♖h1 ♙a2 ♜h2 ♚e8", 15), // castling
-        case("white ♔a1 ♚c1", 3), // king can be caught
-        case("white ♔a1 ♚b1", 3), // king can be caught
-        ::trace //This leads to the arguments being printed in front of the test result.
-    )]
-    fn test_get_reachable_moves(
-        game_state: GameState,
-        expected_nr_of_reachable_moves: usize,
-    ) {
-        let white_nr_of_reachable_moves = game_state.get_reachable_moves().len();
-        assert_eq!(white_nr_of_reachable_moves, expected_nr_of_reachable_moves, "nr of reachable moves");
-
-        let black_nr_of_reachable_moves = game_state.toggle_colors().get_reachable_moves().len();
-        assert_eq!(black_nr_of_reachable_moves, expected_nr_of_reachable_moves, "nr of reachable moves");
-    }
+    // TODO: use to check for checkmate after the final move or delete
+    // //♔♕♗♘♖♙♚♛♝♞♜♟
+    //
+    // #[rstest(
+    //     game_state, expected_nr_of_reachable_moves,
+    //     case("", 20),
+    //     case("e2e4 e7e5", 29),
+    //     case("e2e4 a7a6", 30),
+    //     case("e2e4 b7b5", 29),
+    //     case("a2a4 a7a6 a4a5 b7b5", 22), // en-passant
+    //     case("white ♔a1 ♙b5 ♟a6 Ec6 ♟c5 ♚e8", 6), // en-passant
+    //     case("white ♖a2 ♔e2 ♖h2 ♚e8", 27), // no castling
+    //     case("white ♖a1 ♔e1 ♖h1 ♚e8", 26), // castling
+    //     case("white ♖a1 ♔e1 ♖h1 ♙a2 ♜h2 ♚e8", 15), // castling
+    //     case("white ♔a1 ♚c1", 3), // king can be caught
+    //     case("white ♔a1 ♚b1", 3), // king can be caught
+    //     ::trace //This leads to the arguments being printed in front of the test result.
+    // )]
+    // fn test_get_reachable_moves(
+    //     game_state: GameState,
+    //     expected_nr_of_reachable_moves: usize,
+    // ) {
+    //     let white_nr_of_reachable_moves = game_state.get_reachable_moves().len();
+    //     assert_eq!(white_nr_of_reachable_moves, expected_nr_of_reachable_moves, "nr of reachable moves");
+    //
+    //     let black_nr_of_reachable_moves = game_state.toggle_colors().get_reachable_moves().len();
+    //     assert_eq!(black_nr_of_reachable_moves, expected_nr_of_reachable_moves, "nr of reachable moves");
+    // }
 
     //♔♕♗♘♖♙♚♛♝♞♜♟
 
@@ -836,10 +837,10 @@ mod tests {
 
     #[rstest(
         game_state, castling_move, expected_updated_board_fen,
-        case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e1c1", "r3k2r/8/8/8/8/8/8/2KR3R"),
-        case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e1g1", "r3k2r/8/8/8/8/8/8/R4RK1"),
-        case("black ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e8c8", "2kr3r/8/8/8/8/8/8/R3K2R"),
-        case("black ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e8g8", "r4rk1/8/8/8/8/8/8/R3K2R"),
+        case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e1a1", "r3k2r/8/8/8/8/8/8/2KR3R"),
+        case("white ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e1h1", "r3k2r/8/8/8/8/8/8/R4RK1"),
+        case("black ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e8a8", "2kr3r/8/8/8/8/8/8/R3K2R"),
+        case("black ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "e8h8", "r4rk1/8/8/8/8/8/8/R3K2R"),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_castling_works(

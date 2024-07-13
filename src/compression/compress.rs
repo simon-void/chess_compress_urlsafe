@@ -15,14 +15,13 @@ pub fn compress(moves: Vec<Move>) -> Result<String, ChessError> {
 
     let mut half_move_index = 0;
     for next_move in moves.into_iter() {
-        println!("{next_move}");
         let active_color = game_state.turn_by;
         let target_pos = next_move.from_to.to;
         let from_pos_can_be_dropped = {
             if game_state.looks_like_castling(next_move.from_to)? {
                 false
             } else {
-                let positions_with_figures_that_can_reach_target: Vec<Position> = get_positions_to_reach_target_from(target_pos, &game_state);
+                let positions_with_figures_that_can_reach_target: Vec<Position> = get_positions_to_reach_target_from(target_pos, &game_state)?;
                 if !positions_with_figures_that_can_reach_target.contains(&next_move.from_to.from) {
                     let move_nr = 1 + half_move_index / 2;
                     let err_msg = match active_color {
@@ -64,11 +63,11 @@ mod tests {
 
     #[rstest(
         joined_moves, expected_encoded_game_with_moves_separated_by_space,
-        // case("", ""), // | "no moves -> empty encoded String
+        case("", ""), // | "no moves -> empty encoded String
         case("c2c3", "KS"), // KS | destination not unique target -> encoding needs two chars
-        // case("c2c4", "a"), // Ka | destination is unique target -> encoding needs one char
-        // case("a2a4, h7h6, a4a5, b7b5, a5b6, h6h5, b6c7, h5h4, g2g3, h4g3, c7d8Q", "Y 3v g h p n y f W W 7Q"), // IY 3v Yg xh gp vn py nf OW fW y7Q | tests all pawn moves single-step, double-step, diagonal-capture, en-passant & promotion
-        // case("d2d3, g7g6, c1e3, f8g7, b1c3, g8f6, d1d2, e8h8, e1a1", "T u CU 2 BS -t DL _ A") // LT 2u CU 92 BS -t DL 8_ EA | tests king- & queen-side castling
+        case("c2c4", "a"), // Ka | destination is unique target -> encoding needs one char
+        case("a2a4, h7h6, a4a5, b7b5, a5b6, h6h5, b6c7, h5h4, g2g3, h4g3, c7d8Q", "Y 3v g h p n y f W W 7Q"), // IY 3v Yg xh gp vn py nf OW fW y7Q | tests all pawn moves single-step, double-step, diagonal-capture, en-passant & promotion
+        case("d2d3, g7g6, c1e3, f8g7, b1c3, g8f6, d1d2, e8h8, e1a1", "T u CU 2 BS -t DL _ A") // LT 2u CU 92 BS -t DL 8_ EA | tests king- & queen-side castling
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_compress(
@@ -77,9 +76,7 @@ mod tests {
     ) {
         let moves: Vec<Move> = joined_moves.split(',').filter(|it| it.len() > 0).map(|it| it.trim().parse().unwrap()).collect();
         let expected_encoded_game = expected_encoded_game_with_moves_separated_by_space.replace(' ', "");
-        println!("{expected_encoded_game}");
-        todo!("fix infinite loop in compress")
-        // let actual_encoded_game = compress(moves).unwrap();
-        // assert_eq!(actual_encoded_game, expected_encoded_game);
+        let actual_encoded_game = compress(moves).unwrap();
+        assert_eq!(actual_encoded_game, expected_encoded_game);
     }
 }

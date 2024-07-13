@@ -46,7 +46,7 @@ pub fn decompress(base64_encoded_match: &str) -> Result<Vec<MoveData>, ChessErro
                 };
                 FromTo::new(first_pos, to_pos)
             } else {
-                let positions_with_figures_that_can_reach_target: Vec<Position> = get_positions_to_reach_target_from(first_pos, &game_state);
+                let positions_with_figures_that_can_reach_target: Vec<Position> = get_positions_to_reach_target_from(first_pos, &game_state)?;
                 let from_to: FromTo = match positions_with_figures_that_can_reach_target.len() {
                     0 => {
                         return Err(ChessError {
@@ -105,10 +105,6 @@ mod tests {
     use rstest::rstest;
     use crate::compression::compress::compress;
     use super::*;
-
-    pub fn concat_main_moves(stats: Vec<MoveData>) -> String {
-        stats.iter().map(|move_stats| move_stats.given_move.to_string()).collect::<Vec<String>>().join(",")
-    }
 
     #[rstest(
         joined_moves, expected_encoded_game_with_moves_separated_by_space,

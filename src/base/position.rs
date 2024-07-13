@@ -2,6 +2,7 @@ use std::fmt;
 use std::iter::{Iterator};
 use std::ops::Range;
 use std::str;
+use itertools::Itertools;
 use serde::Serialize;
 use tinyvec::alloc::fmt::Formatter;
 use crate::base::color::Color;
@@ -239,21 +240,27 @@ impl str::FromStr for Position {
 
     fn from_str(code: &str) -> Result<Self, Self::Err> {
         let mut char_iter = code.chars();
-        let column = ((char_iter.next().unwrap() as u8) - 97) as i8;
-        let row = ((char_iter.next().unwrap() as u8) - 49) as i8;
-        if char_iter.next().is_some()  {
+        if code.len()!=2 {
             return Err(ChessError{
-                msg: format!("only 2 chars expected for Position: {}", code),
+                msg: format!("Position str: {code} should consist of 2 chars not {}", code.len()),
                 kind: ErrorKind::IllegalFormat
             });
         }
 
-        if !(I8_RANGE_07.contains(&column) && I8_RANGE_07.contains(&row)) {
-            return Err(ChessError{
-                msg: format!("illegal value for Position: {}", code),
-                kind: ErrorKind::IllegalFormat
-            });
+        fn get_index(maybe_char: Option<char>, offset: u8, index_type: &str, code: &str) -> Result<i8, ChessError> {
+            let ascii_char = maybe_char.unwrap();
+            let ascii_index = ascii_char as u8;
+            if ascii_index<offset || ascii_index>=(offset+8) {
+                return Err(ChessError{
+                    msg: format!("illegal {index_type} char '{ascii_char}' in Position code: {code}"),
+                    kind: ErrorKind::IllegalFormat
+                })
+            };
+            Ok((ascii_index - offset) as i8)
         }
+
+        let column = get_index(char_iter.next(), 97, "column", code)?;
+        let row = get_index(char_iter.next(), 49, "row", code)?;
 
         Ok(Position::new_unchecked(column, row))
     }
@@ -424,15 +431,14 @@ mod tests {
     }
 
     #[rstest(
-    pos_str, expected_column, expected_row, expected_index,
+    pos, expected_column, expected_row, expected_index,
     case("a1", 0, 0, 0),
     case("h8", 7, 7, 63),
     case("b1", 1, 0, 1),
     case("a2", 0, 1, 8),
     ::trace //This leads to the arguments being printed in front of the test result.
     )]
-    fn test_position_from_str(pos_str: &str, expected_column: i8, expected_row: i8, expected_index: usize) {
-        let pos = pos_str.parse::<Position>().unwrap();
+    fn test_position_from_str(pos: Position, expected_column: i8, expected_row: i8, expected_index: usize) {
         assert_eq!(pos.column, expected_column);
         assert_eq!(pos.row, expected_row);
         assert_eq!(pos.index, expected_index);

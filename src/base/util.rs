@@ -26,3 +26,12 @@ impl fmt::Display for Disallowable {
         write!(f, "{}", self.value)
     }
 }
+
+#[cfg(test)]
+pub(crate) mod tests {
+    use std::fmt::Display;
+
+    pub(crate) fn vec_to_str<A: Display>(vec: &Vec<A>, separator: &str) -> String {
+        format!("[{}]", vec.iter().map(|pos|format!("{pos}")).collect::<Vec<String>>().join(separator))
+    }
+}
