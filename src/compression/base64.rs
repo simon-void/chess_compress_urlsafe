@@ -1,5 +1,5 @@
+use std::collections::HashSet;
 use std::sync::OnceLock;
-use regex::Regex;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::position::Position;
 // using url safe base 64 encoding without the padding character since it's not needed
@@ -113,18 +113,27 @@ pub fn encode_base64(position: Position) -> char {
 }
 
 pub fn assert_is_url_safe_base64(str: &str) -> Result<(), ChessError> {
-    // OnceCell is not thread-safe! for that use OnceLock
-    static ONCE: OnceLock<Regex> = OnceLock::new();
-    let url_safe_base64_regex: &Regex = ONCE.get_or_init(|| {
-        Regex::new(r"^([a-z]|[A-Z]|[0-9]|-|_)*$").unwrap()
-    });
+    fn is_url_safe_base64_char(c: char) -> bool {
+        c.is_ascii_alphanumeric() || c == '-' || c == '_'
+    }
 
-    if url_safe_base64_regex.is_match(str) {
+    let illegal_chars_found: HashSet<char> = {
+        let mut illegal_chars: HashSet<char> = HashSet::new();
+        for c in str.chars() {
+            if !is_url_safe_base64_char(c) {
+                illegal_chars.insert(c);
+            };
+        };
+        illegal_chars
+    };
+
+    if illegal_chars_found.is_empty() {
         Ok(())
     } else {
+        let illegal_chars: String = illegal_chars_found.iter().collect();
         Err(ChessError {
-            msg: "value contained characters that are not allowed for a url-safe base64 encoded String. following characters are allowed: a-z, A-Z, 0-1, -, _".to_string(),
-            kind: ErrorKind::IllegalFormat
+            msg: format!("provided value {str} contains {} illegal characters: [{illegal_chars}]! Only the following characters are expected: a-z, A-Z, 0-1, -, _", illegal_chars.len()),
+            kind: ErrorKind::IllegalFormat,
         })
     }
 }

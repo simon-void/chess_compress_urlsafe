@@ -28,7 +28,6 @@ name = "chess_compress_urlsafe"
 version = "0.0.1"
 dependencies = [
  "itertools",
- "regex",
  "rstest",
  "rstest_reuse",
 ]
