@@ -2,7 +2,6 @@ use std::fmt;
 use std::iter::{Iterator};
 use std::ops::Range;
 use std::str;
-use itertools::Itertools;
 use serde::Serialize;
 use tinyvec::alloc::fmt::Formatter;
 use crate::base::color::Color;
@@ -10,7 +9,7 @@ use crate::base::direction::Direction;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::game::board::{Board, FieldContent, USIZE_RANGE_063};
 
-#[derive(Copy, Clone, Eq)]
+#[derive(Copy, Clone, Eq, Hash)]
 pub struct Position {
     pub index: usize,
     pub column: i8,

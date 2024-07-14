@@ -119,7 +119,7 @@ fn inner_get_positions_to_reach_target_from(
                 // check double step pawn move
                 let double_step_straight_pos = single_step_straight_pos.step_unchecked(vertical_direction);
                 if contains_active_pawn(Some(double_step_straight_pos), active_color, board) {
-                    result.push(single_step_straight_pos);
+                    result.push(single_step_straight_pos.step_unchecked(vertical_direction));
                 }
             }
         }
@@ -156,47 +156,52 @@ struct FoundFigure {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
     use rstest::rstest;
-    use crate::base::util::tests::vec_to_str;
+    use crate::base::util::tests::{parse_to_set, set_to_str, vec_has_uniquely_same_elements_as_set, vec_into_set};
+    use crate::base::util::vec_to_str;
     use super::*;
 
     //♔♕♗♘♖♙♚♛♝♞♜♟
 
     #[rstest(
-        game_state, target, expected_nr_of_origins,
-        case("", "b3", 1),
-        case("", "b4", 1),
-        case("", "b5", 0),
-        case("h2h3", "b6", 1),
-        case("h2h3", "b5", 1),
-        case("h2h3", "b4", 0),
-        case("", "c3", 2),
-        case("a2a3", "f6", 2),
-        case("b1c3 g8f6", "d5", 1),
-        case("b1c3 g8f6", "e4", 2),
-        case("e2e4 e7e5", "e2", 4),
-        case("e2e4 e7e5", "e3", 0),
-        case("e2e3 d7d5 e3e4", "d7", 4),
-        case("a2a4 b7b5", "b5", 1),
-        case("a2a4 h7h5", "a5", 1),
-        case("a2a4 h7h5 g2g4", "g4", 1),
-        case("a2a4 h7h5 a4a5 h5h4 g2g4", "g3", 1),
-        case("a2a4 h7h5 h2h4", "h4", 0),
-        case("a2a4 h7h5 a4a5 b7b5", "b6", 1),
-        case("a2a4 b7b5 a4a5 h7h5", "b6", 0),
-        case("white ♕c2 ♘b3 ♘b5 ♘c6 ♘e6 ♞f5 ♘f3 ♘e2 ♔h1 ♚e8", "d4", 6),
+        game_state, target, expected_comma_separated_origins,
+        case("", "b3", "b2"),
+        case("", "b4", "b2"),
+        case("", "b5", ""),
+        case("h2h3", "b6", "b7"),
+        case("h2h3", "b5", "b7"),
+        case("h2h3", "b4", ""),
+        case("", "c3", "b1, c2"),
+        case("a2a3", "f6", "g8, f7"),
+        case("b1c3 g8f6", "d5", "c3"),
+        case("b1c3 g8f6", "e4", "c3, e2"),
+        case("e2e4 e7e5", "e2", "d1, e1, f1, g1"),
+        case("e2e4 e7e5", "e3", ""),
+        case("e2e3 d7d5 e3e4", "d7", "b8, c8, d8, e8"),
+        case("a2a4 b7b5", "b5", "a4"),
+        case("a2a4 h7h5", "a5", "a4"),
+        case("a2a4 h7h5", "a6", ""),
+        case("a2a4 h7h5 g2g4", "g4", "h5"),
+        case("a2a4 h7h5 a4a5 h5h4 g2g4", "g3", "h4"),
+        case("a2a4 h7h5 h2h4", "h4", ""),
+        case("a2a4 h7h5 a4a5 b7b5", "b6", "a5"),
+        case("a2a4 b7b5 a4a5 h7h5", "b6", ""),
+        case("white ♕c2 ♘b3 ♘b5 ♘c6 ♘e6 ♞f5 ♘f3 ♘e2 ♔h1 ♚e8", "d4", "b3, b5, c6, e6, f3, e2"),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_get_positions_to_reach_target_from(
         game_state: GameState,
         target: Position,
-        expected_nr_of_origins: usize,
+        expected_comma_separated_origins: &str,
     ) {
-        let origins = get_positions_to_reach_target_from(target, &game_state).unwrap();
-        let actual_nr_of_origins = origins.len();
-        assert_eq!(
-            actual_nr_of_origins, expected_nr_of_origins,
-            "computed origins for {target}: {}", vec_to_str(&origins, ", ")
-        );
+        let expected_origins: HashSet<Position> = parse_to_set(expected_comma_separated_origins, ",").unwrap();
+        let actual_origins = {
+            let origins_vec: Vec<Position> = get_positions_to_reach_target_from(target, &game_state).unwrap();
+            let origins_set: HashSet<Position> = vec_into_set(&origins_vec);
+            assert_eq!(true, vec_has_uniquely_same_elements_as_set(&origins_vec, &origins_set), "origins_vec contains duplicates. as vec: {}, as set: {}", vec_to_str(&origins_vec,","), set_to_str(&origins_set,","));
+            origins_set
+        };
+        assert_eq!(actual_origins, expected_origins, "actual vs expected position set");
     }
 }

@@ -222,7 +222,7 @@ impl GameState {
         let Some(Figure{fig_type: FigureType::King, color: _}) = self.board.get_figure(a_move.from) else {
             return Ok(false);
         };
-        if let Some(Figure{fig_type: FigureType::Rook, color: rook_color}) = self.board.get_figure(a_move.from) {
+        if let Some(Figure{fig_type: FigureType::Rook, color: rook_color}) = self.board.get_figure(a_move.to) {
             if rook_color==self.turn_by {
                 return Ok(true);
             };

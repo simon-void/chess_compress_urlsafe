@@ -13,7 +13,7 @@ use crate::figure::figure::FigureType;
 // see https://smallcultfollowing.com/babysteps/blog/2024/06/21/claim-auto-and-otherwise/
 #[derive(Debug, Copy, Clone, Serialize)]
 pub struct MoveData {
-    pub given_move: FromTo,
+    pub given_from_to: FromTo,
     pub figure_moved: FigureType,
     pub figure_captured: Option<FigureType>,
     pub move_type: MoveType, // TODO: make this a Box<MoveType> or Rc<MoveType> together with a static lifetime instance of Rc/Box<MoveType::Normal>
@@ -26,7 +26,7 @@ impl MoveData {
         figure_captured: Option<FigureType>,
     ) -> MoveData {
         MoveData {
-            given_move,
+            given_from_to: given_move,
             figure_moved,
             figure_captured,
             move_type: Normal.into()
@@ -36,7 +36,7 @@ impl MoveData {
     pub fn new_en_passant(given_move: FromTo) -> MoveData {
         let captured_pawn_pos= Position::new_unchecked(given_move.to.column, given_move.from.row);
         MoveData {
-            given_move,
+            given_from_to: given_move,
             figure_moved: FigureType::Pawn,
             figure_captured: Some(FigureType::Pawn),
             move_type: EnPassant {captured_pawn_pos},
@@ -49,7 +49,7 @@ impl MoveData {
         promotion_type: PromotionType,
     ) -> MoveData {
         MoveData {
-            given_move,
+            given_from_to: given_move,
             figure_moved: FigureType::Pawn,
             figure_captured,
             move_type: PawnPromotion { promoted_to: promotion_type },
@@ -73,7 +73,7 @@ impl MoveData {
              CastlingType::QueenSide)
         };
         MoveData {
-            given_move,
+            given_from_to: given_move,
             figure_moved: FigureType::King,
             figure_captured: None,
             move_type: Castling {
@@ -224,6 +224,12 @@ impl fmt::Display for Move {
 impl fmt::Debug for Move {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
+    }
+}
+
+impl Hash for Move {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.from_to.hash(state);
     }
 }
 

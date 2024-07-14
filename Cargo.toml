@@ -17,4 +17,4 @@ regex = "1.10.5"
 
 [dev-dependencies]
 rstest = "0.21.0"
-
+rstest_reuse = "0.7.0"
