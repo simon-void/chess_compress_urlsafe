@@ -10,9 +10,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-itertools = "0.13.0"
 regex = "1.10.5"
 
 [dev-dependencies]
+itertools = "0.13.0"
 rstest = "0.21.0"
 rstest_reuse = "0.7.0"
