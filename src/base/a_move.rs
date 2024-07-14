@@ -3,14 +3,13 @@ use std::fmt::Formatter;
 use std::str;
 use crate::base::position::Position;
 use std::hash::{Hash, Hasher};
-use serde::Serialize;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::a_move::MoveType::{Castling, EnPassant, Normal, PawnPromotion};
 use crate::figure::figure::FigureType;
 
 // TODO MoveData should implement Claim as soon as it's added to the language.
 // see https://smallcultfollowing.com/babysteps/blog/2024/06/21/claim-auto-and-otherwise/
-#[derive(Debug, Copy, Clone, Serialize)]
+#[derive(Debug, Copy, Clone)]
 pub struct MoveData {
     pub given_from_to: FromTo,
     pub figure_moved: FigureType,
@@ -148,13 +147,6 @@ impl fmt::Debug for FromTo {
     }
 }
 
-impl Serialize for FromTo {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as serde::Serializer>::Ok, <S as serde::Serializer>::Error> where
-        S: serde::Serializer {
-        serializer.serialize_str(&format!("{}", self))
-    }
-}
-
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Move {
     pub from_to: FromTo,
@@ -244,20 +236,13 @@ impl Default for Move {
     }
 }
 
-impl Serialize for Move {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as serde::Serializer>::Ok, <S as serde::Serializer>::Error> where
-        S: serde::Serializer {
-        serializer.serialize_str(&format!("{}", self))
-    }
-}
-
 pub fn toggle_rows(moves: &Vec<Move>) -> Vec<Move> {
     moves.iter().map(|a_move| a_move.toggle_rows()).collect()
 }
 
 pub const EXPECTED_MAX_NUMBER_OF_MOVES: usize = 80;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum PromotionType {
     Rook,
     Knight,
@@ -308,7 +293,7 @@ impl fmt::Display for PromotionType {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum CastlingType {
     KingSide,
     QueenSide,
@@ -336,7 +321,7 @@ impl fmt::Display for MoveType {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum MoveType {
     Normal,
     PawnPromotion{ promoted_to: PromotionType },

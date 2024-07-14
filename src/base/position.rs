@@ -3,7 +3,6 @@ use std::fmt::Formatter;
 use std::iter::{Iterator};
 use std::ops::Range;
 use std::str;
-use serde::Serialize;
 use crate::base::color::Color;
 use crate::base::direction::Direction;
 use crate::base::errors::{ChessError, ErrorKind};
@@ -280,13 +279,6 @@ impl fmt::Display for Position {
 impl fmt::Debug for Position {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
-    }
-}
-
-impl Serialize for Position {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as serde::Serializer>::Ok, <S as serde::Serializer>::Error> where
-        S: serde::Serializer {
-        serializer.serialize_str(&format!("{}", self))
     }
 }
 

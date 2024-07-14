@@ -1,11 +1,10 @@
 use std::fmt;
 use std::str;
-use serde::Serialize;
 use crate::base::color::Color;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::position::Position;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Figure {
     pub fig_type: FigureType,
     pub color: Color,
@@ -84,7 +83,7 @@ impl str::FromStr for FigureAndPosition {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub enum FigureType {
     Pawn,
     Rook,
