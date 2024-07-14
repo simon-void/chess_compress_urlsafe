@@ -1,8 +1,7 @@
 use std::fmt;
+use std::fmt::Formatter;
 use std::str;
 use crate::base::position::Position;
-use tinyvec::TinyVec;
-use tinyvec::alloc::fmt::Formatter;
 use std::hash::{Hash, Hasher};
 use serde::Serialize;
 use crate::base::errors::{ChessError, ErrorKind};
@@ -257,32 +256,6 @@ pub fn toggle_rows(moves: &Vec<Move>) -> Vec<Move> {
 }
 
 pub const EXPECTED_MAX_NUMBER_OF_MOVES: usize = 80;
-
-#[derive(Clone)]
-pub struct MoveArray {
-    array: [Move; EXPECTED_MAX_NUMBER_OF_MOVES]
-}
-
-impl tinyvec::Array for MoveArray {
-    type Item = Move;
-    const CAPACITY: usize = EXPECTED_MAX_NUMBER_OF_MOVES;
-
-    fn as_slice(&self) -> &[Self::Item] {
-        &self.array
-    }
-
-    fn as_slice_mut(&mut self) -> &mut [Self::Item] {
-        &mut self.array
-    }
-
-    fn default() -> Self {
-        MoveArray {
-            array: [Move::default(); EXPECTED_MAX_NUMBER_OF_MOVES]
-        }
-    }
-}
-
-pub type Moves = TinyVec<MoveArray>;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
 pub enum PromotionType {

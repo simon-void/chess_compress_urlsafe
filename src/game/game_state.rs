@@ -1,6 +1,5 @@
-use tinyvec::*;
 use std::{fmt,str};
-use crate::base::a_move::{FromTo, Move, MoveData, Moves, MoveType, PromotionType};
+use crate::base::a_move::{FromTo, Move, MoveData, MoveType, PromotionType};
 use crate::base::a_move::CastlingType::{KingSide, QueenSide};
 use crate::base::color::Color;
 use crate::base::direction::Direction;
@@ -439,25 +438,6 @@ impl GameState {
         },
          move_stats,
         )
-    }
-
-    pub fn get_reachable_moves(&self) -> Moves {
-        let mut move_collector: Moves = tiny_vec!();
-        let figures_of_color_with_pos: [Option<(Figure, Position)>; 16] =
-            self.board.get_all_figures_of_color(self.turn_by);
-
-        for figure_of_color in figures_of_color_with_pos {
-            match figure_of_color {
-                Some((figure, pos)) => {
-                    figure.for_reachable_moves(pos, self, &mut move_collector);
-                },
-                None => {
-                    break;
-                }
-            }
-        }
-
-        move_collector
     }
 
     pub fn get_passive_kings_pos(&self) -> Position {

@@ -1,9 +1,9 @@
 use std::fmt;
+use std::fmt::Formatter;
 use std::iter::{Iterator};
 use std::ops::Range;
 use std::str;
 use serde::Serialize;
-use tinyvec::alloc::fmt::Formatter;
 use crate::base::color::Color;
 use crate::base::direction::Direction;
 use crate::base::errors::{ChessError, ErrorKind};
@@ -272,7 +272,7 @@ impl PartialEq for Position {
 }
 
 impl fmt::Display for Position {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", (self.column + 97) as u8 as char, (self.row+49) as u8 as char)
     }
 }

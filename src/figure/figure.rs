@@ -1,11 +1,9 @@
 use std::fmt;
 use std::str;
 use serde::Serialize;
-use crate::base::a_move::Moves;
 use crate::base::color::Color;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::position::Position;
-use crate::game::game_state::GameState;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize)]
 pub struct Figure {
@@ -14,11 +12,6 @@ pub struct Figure {
 }
 
 impl Figure {
-    pub fn for_reachable_moves(&self, _pos: Position, _match_state: &GameState, _move_collector: &mut Moves) {
-        // functions::is_reachable_by::for_reachable_moves(self.fig_type, pos, match_state, move_collector)
-        panic!("TODO: reimplement or delete")
-    }
-
     pub fn get_fen_char(&self) -> char {
         match self.fig_type {
             FigureType::Pawn => {if self.color == Color::White {'P'} else {'p'}}
