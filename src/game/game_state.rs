@@ -436,7 +436,8 @@ impl GameState {
         )
     }
 
-    pub fn get_passive_king_pos(&self) -> Position {
+    #[allow(dead_code)]
+    fn get_passive_king_pos(&self) -> Position {
         match self.turn_by {
             Color::Black => {self.white_king_pos}
             Color::White => {self.black_king_pos}

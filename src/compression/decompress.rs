@@ -6,7 +6,8 @@ use crate::compression::base64::{assert_is_url_safe_base64, decode_base64};
 use crate::figure::functions::is_reachable_by::get_positions_to_reach_target_from;
 use crate::game::game_state::GameState;
 
-pub fn decompress(base64_encoded_match: &str) -> Result<Vec<MoveData>, ChessError> {
+/// the length of Vec<PositionData> is 1 higher than the length of Vec<MoveData>, since the initial Position exist before the first move
+pub fn decompress(base64_encoded_match: &str) -> Result<(Vec<PositionData>, Vec<MoveData>), ChessError> {
     assert_is_url_safe_base64(base64_encoded_match)?;
 
     fn get_next_position(encoded_chars: &mut Chars) -> Result<Option<Position>, ChessError> {
@@ -22,6 +23,11 @@ pub fn decompress(base64_encoded_match: &str) -> Result<Vec<MoveData>, ChessErro
     let mut encoded_chars: Chars = base64_encoded_match.chars();
     let mut game_state = GameState::classic();
     let mut moves_played: Vec<MoveData> = Vec::new();
+    let mut positions_reached: Vec<PositionData> = {
+        let mut positions_data = Vec::new();
+        positions_data.push(PositionData::new(game_state.get_fen()));
+        positions_data
+    };
 
     let mut half_move_index = 0;
     loop {
@@ -93,11 +99,24 @@ pub fn decompress(base64_encoded_match: &str) -> Result<Vec<MoveData>, ChessErro
 
         let (new_game_state, latest_move_data) = game_state.do_move(next_move);
         game_state = new_game_state;
+        positions_reached.push(PositionData::new(game_state.get_fen()));
         moves_played.push(latest_move_data);
         half_move_index = half_move_index + 1;
     }
 
-    Ok(moves_played)
+    Ok((positions_reached, moves_played))
+}
+
+pub struct PositionData {
+    pub fen: String,
+}
+
+impl PositionData {
+    pub fn new(fen: String) -> PositionData {
+        PositionData {
+            fen,
+        }
+    }
 }
 
 // Tests are in compression/mod.rs

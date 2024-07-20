@@ -11,14 +11,14 @@ mod tests {
     use crate::base::util::tests::parse_to_vec;
     use crate::base::util::vec_to_str;
     use crate::compression::compress::compress;
-    use crate::compression::decompress::decompress;
+    use crate::compression::decompress::{decompress, PositionData};
 
     fn remove_space(s: &str) -> String {
         s.replace(' ', "")
     }
 
     fn extract_given_move(vec_of_move_data: Vec<MoveData>) -> Vec<Move> {
-        vec_of_move_data.iter().map(|it|{
+        vec_of_move_data.iter().map(|it| {
             let from_to = it.given_from_to;
             if let PawnPromotion { promoted_to: promotion_type } = it.move_type {
                 Move::new_with_promotion(from_to, promotion_type)
@@ -51,7 +51,8 @@ mod tests {
     fn test_decompress(decoded_moves: &str, encoded_moves_seperated_by_space: &str) {
         let actual_decoded_moves = {
             let given_encoded_game = remove_space(encoded_moves_seperated_by_space);
-            let given_moves: Vec<Move> = extract_given_move(decompress(given_encoded_game.as_str()).unwrap());
+            let (_positions_data, moves_data): (Vec<PositionData>, Vec<MoveData>) = decompress(given_encoded_game.as_str()).unwrap();
+            let given_moves: Vec<Move> = extract_given_move(moves_data);
             vec_to_str(&given_moves, ",")
         };
         let expected_decoded_moves = format!("[{}]", remove_space(decoded_moves));
