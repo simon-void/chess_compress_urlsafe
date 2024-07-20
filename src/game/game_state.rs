@@ -20,7 +20,7 @@ pub struct GameState {
     pub is_white_king_side_castling_still_allowed: Disallowable,
     pub is_black_queen_side_castling_still_allowed: Disallowable,
     pub is_black_king_side_castling_still_allowed: Disallowable,
-    moves_played: Vec<Move>,
+    moves_played_data: MovesPlayedData,
 }
 
 impl GameState {
@@ -35,7 +35,7 @@ impl GameState {
             is_white_king_side_castling_still_allowed: Disallowable::new(true),
             is_black_queen_side_castling_still_allowed: Disallowable::new(true),
             is_black_king_side_castling_still_allowed: Disallowable::new(true),
-            moves_played: Vec::new(),
+            moves_played_data: MovesPlayedData::new(),
         }
     }
 
@@ -193,7 +193,7 @@ impl GameState {
             is_white_king_side_castling_still_allowed: is_white_king_side_castling_possible,
             is_black_queen_side_castling_still_allowed: is_black_queen_side_castling_possible,
             is_black_king_side_castling_still_allowed: is_black_king_side_castling_possible,
-            moves_played: Vec::new(),
+            moves_played_data: MovesPlayedData::new(),
         };
 
         Ok(game_state)
@@ -415,7 +415,7 @@ impl GameState {
                     self.white_king_pos,
                     self.black_king_pos,
                     None,
-                    MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type()),
+                    MoveData::new(next_move.from_to, moving_figure.fig_type, capture_info.get_captured_figure_type()),
                 )
             },
         };
@@ -430,21 +430,10 @@ impl GameState {
             is_white_king_side_castling_still_allowed: new_is_white_king_side_castling_allowed,
             is_black_queen_side_castling_still_allowed: new_is_black_queen_side_castling_allowed,
             is_black_king_side_castling_still_allowed: new_is_black_king_side_castling_allowed,
-            moves_played: {
-                let mut new_moves_played = self.moves_played.clone();
-                new_moves_played.push(next_move);
-                new_moves_played
-            },
+            moves_played_data: MovesPlayedData::new_after_move(&self.moves_played_data, &move_stats),
         },
          move_stats,
         )
-    }
-
-    pub fn get_passive_kings_pos(&self) -> Position {
-        match self.turn_by {
-            Color::White => self.black_king_pos,
-            Color::Black => self.white_king_pos,
-        }
     }
 
     pub fn get_passive_king_pos(&self) -> Position {
@@ -454,15 +443,16 @@ impl GameState {
         }
     }
 
-    pub fn get_active_king(&self) -> Position {
-        if self.turn_by==Color::White {
-            self.white_king_pos
-        } else {
-            self.black_king_pos
-        }
+    pub fn get_fen(&self) -> String {
+        let mut fen = self.get_fen_part1to4();
+        fen.push(' ');
+        fen.push_str((self.moves_played_data.half_moves_played_without_progress).to_string().as_str());
+        fen.push(' ');
+        fen.push_str(self.moves_played_data.current_round().to_string().as_str());
+        fen
     }
 
-    pub fn get_fen_part1to4(&self) -> String {
+    fn get_fen_part1to4(&self) -> String {
         let mut fen_part1to4 = self.board.get_fen_part1();
         fen_part1to4.push(' ');
         fen_part1to4.push(self.turn_by.get_fen_char());
@@ -484,14 +474,6 @@ impl GameState {
             Some(pos) => { fen_part1to4.push_str(format!("{}", pos).as_str());}
         }
         fen_part1to4
-    }
-
-    pub fn get_moves_played(&self) -> Vec<Move> {
-        // let debug_format = format!("{:?}", self.moves_played);
-        // // remove the embracing '[' and ']'
-        // let last_char_index = debug_format.len()-1;
-        // debug_format[1..last_char_index].to_string()
-        self.moves_played.clone()
     }
 }
 
@@ -643,6 +625,40 @@ pub static BLACK_KING_STARTING_POS: Position = Position::new_unchecked(4, 7);
 static BLACK_KING_SIDE_ROOK_STARTING_POS: Position = Position::new_unchecked(7, 7);
 static BLACK_QUEEN_SIDE_ROOK_STARTING_POS: Position = Position::new_unchecked(0, 7);
 
+#[derive(Clone, Debug)]
+struct MovesPlayedData {
+    half_moves_played: u32,
+    pub half_moves_played_without_progress: u32
+}
+
+impl MovesPlayedData {
+    fn new() -> MovesPlayedData {
+        MovesPlayedData {
+            half_moves_played: 0,
+            half_moves_played_without_progress: 0,
+        }
+    }
+
+    fn new_after_move(&self, move_data: &MoveData) -> MovesPlayedData {
+        let new_half_moves_played = self.half_moves_played + 1;
+
+        let new_half_moves_played_without_progress = if move_data.is_pawn_move() || move_data.did_catch_figure() {
+            0
+        }  else {
+            self.half_moves_played_without_progress + 1
+        };
+        MovesPlayedData {
+            half_moves_played: new_half_moves_played,
+            half_moves_played_without_progress: new_half_moves_played_without_progress,
+        }
+    }
+
+    // current round starting at 1, is increased after black moves
+    fn current_round(&self) -> u32 {
+        (self.half_moves_played / 2) + 1
+    }
+}
+
 //------------------------------Tests------------------------
 
 #[cfg(test)]
@@ -673,17 +689,15 @@ mod tests {
                 is_white_king_side_castling_still_allowed: self.is_black_king_side_castling_still_allowed,
                 is_black_queen_side_castling_still_allowed: self.is_white_queen_side_castling_still_allowed,
                 is_black_king_side_castling_still_allowed: self.is_white_king_side_castling_still_allowed,
-                moves_played: toggle_rows(&self.moves_played),
+                moves_played_data: self.moves_played_data.clone(),
             }
         }
     }
 
-    use itertools::Itertools;
     use super::*;
     use rstest::*;
-    use crate::base::a_move::toggle_rows;
     use crate::base::color::Color;
-
+    use crate::base::util::tests::parse_to_vec;
     //♔♕♗♘♖♙♚♛♝♞♜♟
 
     #[rstest(
@@ -833,18 +847,101 @@ mod tests {
         assert_eq!(actual_updated_board_fen, expected_updated_board_fen);
     }
 
+    //♔♕♗♘♖♙♚♛♝♞♜♟
+
     #[rstest(
-        game_state, expected_moves_played,
-        case("", ""),
-        case("e2e4", "e2e4"),
-        case("e2e4 e7e5 g1f3", "e2e4, e7e5, g1f3"),
+        game_config, expected_fen,
+        case("", "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+        case("e2e4", "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1"),
+        case("e2e4 e7e5", "rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2"),
+        case("b1a3 g8h6 g1h3", "rnbqkb1r/pppppppp/7n/8/8/N6N/PPPPPPPP/R1BQKB1R b KQkq - 3 2"),
+        case("b1a3 g8h6 a1b1", "rnbqkb1r/pppppppp/7n/8/8/N7/PPPPPPPP/1RBQKBNR b Kkq - 3 2"),
+        case("b1a3 g8h6 a1b1 h8g8", "rnbqkbr1/pppppppp/7n/8/8/N7/PPPPPPPP/1RBQKBNR w Kq - 4 3"),
+        case("white ♔d1 ♖h1 ♚e8", "4k3/8/8/8/8/8/8/3K3R w - - 0 1"),
+        case("black ♖a1 ♔e1 ♖h1 ♜a8 ♚e8 ♜h8", "r3k2r/8/8/8/8/8/8/R3K2R b KQkq - 0 1"),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
-    fn test_get_moves_played(
-        game_state: GameState,
-        expected_moves_played: &str,
+    fn test_get_fen(
+        game_config: &str,
+        expected_fen: &str,
     ) {
-        let actual_moves_played: String = game_state.get_moves_played().iter().map(|it|format!("{it}")).join(", ");
-        assert_eq!(actual_moves_played, expected_moves_played.to_string(), "moves played");
+        let game_state = game_config.parse::<GameState>().unwrap();
+        let actual_fen = game_state.get_fen();
+        assert_eq!(actual_fen, String::from(expected_fen));
+    }
+
+    fn get_latest_move_data_after(moves: Vec<Move>) -> MoveData {
+        let mut latest_game_state = GameState::classic();
+        let mut latest_move_data = MoveData::new_castling("e1h1".parse::<FromTo>().unwrap());
+        for next_move in moves {
+            (latest_game_state, latest_move_data) = latest_game_state.do_move(next_move);
+        };
+        latest_move_data
+    }
+
+    #[rstest(
+        moves_made, expected_did_last_move_make_progress,
+        case("e2e4", true),
+        case("e2e4 g8f6", false),
+        case("e2e3", true),
+        case("e2e4 d7d5", true),
+        case("e2e4 d7d5 e4d5", true),
+        case("b1c3 d7d5 c3d5", true),
+        case("b1c3 e7e5 c3d5", false),
+        case("e2e4 d7d5 d1e2", false),
+        case("e2e4 d7d5 e1e2", false),
+        case("e2e4 d7d5 f1e2", false),
+        case("e2e4 d7d5 e4e5 f7f5 e5f6 f8g7 f6g7 a7a6 g7h8R", true),
+        case("e2e4 d7d5 e4e5 f7f5 e5f6 f8g7 f6g7 a7a6 g7g8B", true),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_did_last_move_make_progress(
+        moves_made: &str,
+        expected_did_last_move_make_progress: bool,
+    ) {
+        let latest_move_data = {
+            let moves: Vec<Move> = parse_to_vec::<Move>(moves_made, " ").expect("invalid moves");
+            get_latest_move_data_after(moves)
+        };
+        let actual_did_last_move_make_progress = latest_move_data.did_make_progress();
+        assert_eq!(actual_did_last_move_make_progress, expected_did_last_move_make_progress, "moves made: {}", moves_made);
+    }
+
+    #[rstest(
+        moves_made, expected_latest_moved_figure,
+        case("e2e4", "Pawn"),
+        case("e2e4 g8f6", "Knight"),
+        case("e2e4 d7d5 e4d5", "Pawn"),
+        case("b1c3 d7d5 c3d5", "Knight"),
+        case("b1c3 e7e5 c3d5", "Knight"),
+        case("e2e4 d7d5 d1e2", "Queen"),
+        case("e2e4 d7d5 e1e2", "King"),
+        case("e2e4 d7d5 f1e2", "Bishop"),
+        case("g1f3 d7d6 g2g3 d6d5 f1g2 d5d4 e1h1", "King"),
+        case("g1f3 d7d6 h1g1", "Rook"),
+        case("e2e4 d7d5 e4e5 f7f5 e5f6", "Pawn"),
+        case("e2e4 d7d5 e4e5 f7f5 e5f6 f8g7 f6g7 a7a6 g7h8R", "Pawn"),
+        case("e2e4 d7d5 e4e5 f7f5 e5f6 f8g7 f6g7 a7a6 g7g8B", "Pawn"),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_move_data_figure_moved(
+        moves_made: &str,
+        expected_latest_moved_figure: &str,
+    ) {
+        let latest_move_data = {
+            let moves: Vec<Move> = parse_to_vec::<Move>(moves_made, " ").expect("invalid moves");
+            get_latest_move_data_after(moves)
+        };
+        let expected_figure_type = match expected_latest_moved_figure {
+            "Pawn" => FigureType::Pawn,
+            "Rook" => FigureType::Rook,
+            "Knight" => FigureType::Knight,
+            "Bishop" => FigureType::Bishop,
+            "Queen" => FigureType::Queen,
+            "King" => FigureType::King,
+            _ => panic!("unknown figure type: {expected_latest_moved_figure}")
+        };
+
+        assert_eq!(latest_move_data.figure_moved, expected_figure_type, "moves made: {}", moves_made);
     }
 }

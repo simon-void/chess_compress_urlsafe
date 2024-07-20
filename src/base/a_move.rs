@@ -89,6 +89,11 @@ impl MoveData {
     pub fn is_pawn_move(&self) -> bool {
         self.figure_moved == FigureType::Pawn
     }
+
+    // needed for fen computation
+    pub fn did_make_progress(&self) -> bool {
+        self.is_pawn_move() || self.did_catch_figure()
+    }
 }
 
 #[derive(Copy, Clone, Eq, PartialEq)]
