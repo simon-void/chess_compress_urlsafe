@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fmt::Formatter;
+use std::fmt::{Display, Formatter, write};
 use std::str;
 use crate::base::position::Position;
 use std::hash::{Hash, Hasher};
@@ -207,7 +207,7 @@ impl str::FromStr for Move {
     }
 }
 
-impl fmt::Display for Move {
+impl Display for Move {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.from_to)?;
         if let Some(promotion_type) = self.promotion_type {
@@ -268,7 +268,7 @@ impl PromotionType {
     pub fn as_encoded(&self) -> char {
         match self {
             PromotionType::Rook => 'R',
-            PromotionType::Knight => 'K',
+            PromotionType::Knight => 'N',
             PromotionType::Bishop => 'B',
             PromotionType::Queen => 'Q'
         }
@@ -282,17 +282,17 @@ impl str::FromStr for PromotionType {
         match s {
             "Q" => Ok(PromotionType::Queen),
             "R" => Ok(PromotionType::Rook),
-            "K" => Ok(PromotionType::Knight),
+            "N" => Ok(PromotionType::Knight),
             "B" => Ok(PromotionType::Bishop),
             _ => Err(ChessError{
-                msg: format!("unknown pawn promotion type: {}. Only 'QRKB' are allowed.", s),
+                msg: format!("unknown pawn promotion type: {}. Only 'QRNB' are allowed.", s),
                 kind: ErrorKind::IllegalFormat
             }),
         }
     }
 }
 
-impl fmt::Display for PromotionType {
+impl Display for PromotionType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.as_encoded())
     }
@@ -304,7 +304,7 @@ pub enum CastlingType {
     QueenSide,
 }
 
-impl fmt::Display for MoveType {
+impl Display for MoveType {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let code = match self {
             Normal => {"-"}
@@ -340,8 +340,9 @@ pub enum MoveType {
 #[cfg(test)]
 mod tests {
     use rstest::*;
-    use crate::base::a_move::{FromTo, Move};
+    use crate::base::a_move::{FromTo, Move, PromotionType};
     use crate::base::position::Position;
+    use crate::figure::figure::FigureType;
 
     #[rstest(
         from_to, from, to,
@@ -359,19 +360,44 @@ mod tests {
 
 
     #[rstest(
-        a_move, from, to, promotes,
-        case("b1c3", "b1", "c3", false),
-        case("g7f8Q", "g7", "f8", true),
+        a_move, from, to, promotes_to,
+        case("b1c3", "b1", "c3", None),
+        case("g7f8Q", "g7", "f8", Some("Q")),
+        case("a1a8R", "a1", "a8", Some("R")),
+        case("a4h4N", "a4", "h4", Some("N")),
+        case("b8h2B", "b8", "h2", Some("B")),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
     fn test_move_from_str(
         a_move: Move,
         from: Position,
         to: Position,
-        promotes: bool,
+        promotes_to: Option<&'static str>,
     ) {
         assert_eq!(from, a_move.from_to.from);
         assert_eq!(to, a_move.from_to.to);
-        assert_eq!(promotes, a_move.promotion_type.is_some());
+        let given_promotion_type: Option<PromotionType> = promotes_to.map(|it| it.parse().expect(format!("unknown PromotionType: {it}").as_str()));
+        assert_eq!(given_promotion_type, a_move.promotion_type);
+    }
+
+    #[rstest(
+        given_promotion_type,
+        case("R"),
+        case("N"),
+        case("B"),
+        case("Q"),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_PromotionType_Display_and_FromStr(
+        given_promotion_type: PromotionType,
+    ) {
+        let type_str = format!("{given_promotion_type}");
+        let actual_promotion_type: PromotionType = type_str.as_str().parse().unwrap();
+        assert_eq!(actual_promotion_type, given_promotion_type);
+    }
+
+    #[test]
+    fn test_Knight_encodes_as_N() {
+        assert_eq!('N', PromotionType::Knight.as_encoded());
     }
 }

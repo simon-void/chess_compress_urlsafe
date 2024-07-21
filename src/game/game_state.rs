@@ -804,7 +804,7 @@ mod tests {
         game_state, promoting_move,
         case("white ♔b6 ♙a7 ♚h6", "a7a8Q"),
         case("white ♔b6 ♙a7 ♚h6", "a7a8R"),
-        case("white ♔b6 ♙a7 ♚h6", "a7a8K"),
+        case("white ♔b6 ♙a7 ♚h6", "a7a8N"),
         case("white ♔b6 ♙a7 ♚h6", "a7a8B"),
         case("white ♔b6 ♙a7 ♞b8 ♚h6", "a7b8Q"),
         ::trace //This leads to the arguments being printed in front of the test result.

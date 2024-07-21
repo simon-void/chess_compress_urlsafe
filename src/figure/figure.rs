@@ -1,5 +1,7 @@
 use std::fmt;
-use std::str;
+use std::fmt::Display;
+use std::str::FromStr;
+use FigureType::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::base::color::Color;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::position::Position;
@@ -13,33 +15,33 @@ pub struct Figure {
 impl Figure {
     pub fn get_fen_char(&self) -> char {
         match self.fig_type {
-            FigureType::Pawn => {if self.color == Color::White {'P'} else {'p'}}
-            FigureType::Rook => {if self.color == Color::White {'R'} else {'r'}}
-            FigureType::Knight => {if self.color == Color::White {'N'} else {'n'}}
-            FigureType::Bishop => {if self.color == Color::White {'B'} else {'b'}}
-            FigureType::Queen => {if self.color == Color::White {'Q'} else {'q'}}
-            FigureType::King => {if self.color == Color::White {'K'} else {'k'}}
+            Pawn => {if self.color == Color::White {'P'} else {'p'}}
+            Rook => {if self.color == Color::White {'R'} else {'r'}}
+            Knight => {if self.color == Color::White {'N'} else {'n'}}
+            Bishop => {if self.color == Color::White {'B'} else {'b'}}
+            Queen => {if self.color == Color::White {'Q'} else {'q'}}
+            King => {if self.color == Color::White {'K'} else {'k'}}
         }
     }
 }
 
-impl str::FromStr for Figure {
+impl FromStr for Figure {
     type Err = ChessError;
 
     fn from_str(desc: &str) -> Result<Self, Self::Err> {
         match desc {
-            "♙" => Ok(Figure{fig_type: FigureType::Pawn, color: Color::White}),
-            "♟" => Ok(Figure{fig_type: FigureType::Pawn, color: Color::Black}),
-            "♖" => Ok(Figure{fig_type: FigureType::Rook, color: Color::White}),
-            "♜" => Ok(Figure{fig_type: FigureType::Rook, color: Color::Black}),
-            "♘" => Ok(Figure { fig_type: FigureType::Knight, color: Color::White }),
-            "♞" => Ok(Figure { fig_type: FigureType::Knight, color: Color::Black }),
-            "♗" => Ok(Figure { fig_type: FigureType::Bishop, color: Color::White }),
-            "♝" => Ok(Figure { fig_type: FigureType::Bishop, color: Color::Black }),
-            "♕" => Ok(Figure { fig_type: FigureType::Queen, color: Color::White }),
-            "♛" => Ok(Figure { fig_type: FigureType::Queen, color: Color::Black }),
-            "♔" => Ok(Figure { fig_type: FigureType::King, color: Color::White }),
-            "♚" => Ok(Figure { fig_type: FigureType::King, color: Color::Black }),
+            "♙" => Ok(Figure{fig_type: Pawn, color: Color::White}),
+            "♟" => Ok(Figure{fig_type: Pawn, color: Color::Black}),
+            "♖" => Ok(Figure{fig_type: Rook, color: Color::White}),
+            "♜" => Ok(Figure{fig_type: Rook, color: Color::Black}),
+            "♘" => Ok(Figure { fig_type: Knight, color: Color::White }),
+            "♞" => Ok(Figure { fig_type: Knight, color: Color::Black }),
+            "♗" => Ok(Figure { fig_type: Bishop, color: Color::White }),
+            "♝" => Ok(Figure { fig_type: Bishop, color: Color::Black }),
+            "♕" => Ok(Figure { fig_type: Queen, color: Color::White }),
+            "♛" => Ok(Figure { fig_type: Queen, color: Color::Black }),
+            "♔" => Ok(Figure { fig_type: King, color: Color::White }),
+            "♚" => Ok(Figure { fig_type: King, color: Color::Black }),
             _ => Err(ChessError{
                 msg: format!("unexpected character, utf-chess symbol like ♙ expected but got {}", desc),
                 kind: ErrorKind::IllegalFormat,
@@ -48,15 +50,15 @@ impl str::FromStr for Figure {
     }
 }
 
-impl fmt::Display for Figure {
+impl Display for Figure {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let symbol = match self.fig_type {
-            FigureType::Pawn => {if self.color==Color::White {"♙"} else {"♟"}}
-            FigureType::Rook => {if self.color==Color::White {"♖"} else {"♜"}}
-            FigureType::Knight => {if self.color==Color::White {"♘"} else {"♞"}}
-            FigureType::Bishop => {if self.color==Color::White {"♗"} else {"♝"}}
-            FigureType::Queen => {if self.color==Color::White {"♕"} else {"♛"}}
-            FigureType::King => {if self.color==Color::White {"♔"} else {"♚"}}
+            Pawn => {if self.color==Color::White {"♙"} else {"♟"}}
+            Rook => {if self.color==Color::White {"♖"} else {"♜"}}
+            Knight => {if self.color==Color::White {"♘"} else {"♞"}}
+            Bishop => {if self.color==Color::White {"♗"} else {"♝"}}
+            Queen => {if self.color==Color::White {"♕"} else {"♛"}}
+            King => {if self.color==Color::White {"♔"} else {"♚"}}
         };
         write!(f,"{}", symbol)
     }
@@ -68,7 +70,7 @@ pub struct FigureAndPosition {
     pub pos: Position,
 }
 
-impl str::FromStr for FigureAndPosition {
+impl FromStr for FigureAndPosition {
     type Err = ChessError;
 
     fn from_str(desc: &str) -> Result<Self, Self::Err> {
@@ -91,4 +93,63 @@ pub enum FigureType {
     Bishop,
     Queen,
     King,
+}
+
+impl Display for FigureType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let symbol = match self {
+            Pawn => 'P',
+            Rook => 'R',
+            Knight => 'N',
+            Bishop => 'B',
+            Queen => 'Q',
+            King => 'K',
+        };
+        write!(f,"{}", symbol)
+    }
+}
+
+impl FromStr for FigureType {
+    type Err = ChessError;
+
+    fn from_str(desc: &str) -> Result<Self, Self::Err> {
+        match desc {
+            "P" => Ok(Pawn),
+            "R" => Ok(Rook),
+            "N" => Ok(Knight),
+            "B" => Ok(Bishop),
+            "Q" => Ok(Queen),
+            "K" => Ok(King),
+            _ => Err(ChessError{
+                msg: format!("unexpected character, char P, R, N, B, Q, or K expected but got {}", desc),
+                kind: ErrorKind::IllegalFormat,
+            })
+        }
+    }
+}
+
+//------------------------------Tests------------------------
+
+#[cfg(test)]
+mod tests {
+    use rstest::*;
+    use crate::figure::figure::FigureType;
+
+    #[rstest(
+        given_figure_type,
+        case("P"),
+        case("R"),
+        case("N"),
+        case("B"),
+        case("Q"),
+        case("K"),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_FigureType_Display_and_FromStr(
+        given_figure_type: FigureType,
+    ) {
+        let type_str = format!("{given_figure_type}");
+        let actual_figure_type: FigureType = type_str.as_str().parse().unwrap();
+        assert_eq!(actual_figure_type, given_figure_type);
+    }
 }
