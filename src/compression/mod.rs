@@ -51,7 +51,8 @@ mod tests {
     fn test_decompress(decoded_moves: &str, encoded_moves_seperated_by_space: &str) {
         let actual_decoded_moves = {
             let given_encoded_game = remove_space(encoded_moves_seperated_by_space);
-            let (_positions_data, moves_data): (Vec<PositionData>, Vec<MoveData>) = decompress(given_encoded_game.as_str()).unwrap();
+            let (positions_data, moves_data): (Vec<PositionData>, Vec<MoveData>) = decompress(given_encoded_game.as_str()).unwrap();
+            assert_eq!(positions_data.len(), moves_data.len()+1, "each game should consist of 1 more position than moves made, but got {} positions and {} moves", positions_data.len(), moves_data.len());
             let given_moves: Vec<Move> = extract_given_move(moves_data);
             vec_to_str(&given_moves, ",")
         };
