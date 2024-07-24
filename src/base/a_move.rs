@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fmt::{Display, Formatter, write};
+use std::fmt::{Display, Formatter};
 use std::str;
 use crate::base::position::Position;
 use std::hash::{Hash, Hasher};
@@ -342,7 +342,6 @@ mod tests {
     use rstest::*;
     use crate::base::a_move::{FromTo, Move, PromotionType};
     use crate::base::position::Position;
-    use crate::figure::figure::FigureType;
 
     #[rstest(
         from_to, from, to,
