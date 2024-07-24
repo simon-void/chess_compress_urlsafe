@@ -75,7 +75,7 @@ pub fn decompress(base64_encoded_match: &str) -> Result<(Vec<PositionData>, Vec<
                 let promotion_type: PromotionType = match encoded_chars.next() {
                     None => {
                         return Err(ChessError {
-                            msg: format!("missing pawn promotion type at last decoded move {from_to}, one of 'Q', 'R', 'K' or 'B' was expected next depending on what figure the pawn should promoted to"),
+                            msg: format!("missing pawn promotion type at last decoded move {from_to}, one of 'Q', 'R', 'N' or 'B' was expected next depending on what figure the pawn should promoted to"),
                             kind: ErrorKind::IllegalFormat,
                         });
                     }
@@ -84,7 +84,7 @@ pub fn decompress(base64_encoded_match: &str) -> Result<(Vec<PositionData>, Vec<
                             Ok(promotion_type) => {promotion_type}
                             Err(_) => {
                                 return Err(ChessError {
-                                    msg: format!("missing pawn promotion at decoded move {move_index}. {from_to}, one of 'Q', 'R', 'K' or 'B' was expected next depending on what figure the pawn should promoted to"),
+                                    msg: format!("missing pawn promotion at decoded move {move_index}. {from_to}, one of 'Q', 'R', 'N' or 'B' was expected next depending on what figure the pawn should promoted to"),
                                     kind: ErrorKind::IllegalFormat,
                                 });
                             }
