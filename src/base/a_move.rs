@@ -387,7 +387,7 @@ mod tests {
         case("Q"),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
-    fn test_PromotionType_Display_and_FromStr(
+    fn test_promotion_type_traits_display_and_fromstr_work_together(
         given_promotion_type: PromotionType,
     ) {
         let type_str = format!("{given_promotion_type}");
@@ -396,7 +396,7 @@ mod tests {
     }
 
     #[test]
-    fn test_Knight_encodes_as_N() {
+    fn test_knight_encodes_as_n() {
         assert_eq!('N', PromotionType::Knight.as_encoded());
     }
 }
