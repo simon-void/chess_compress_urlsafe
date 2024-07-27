@@ -145,7 +145,7 @@ mod tests {
         case("K"),
         ::trace //This leads to the arguments being printed in front of the test result.
     )]
-    fn test_FigureType_Display_and_FromStr(
+    fn test_figuretype_display_and_fromstr(
         given_figure_type: FigureType,
     ) {
         let type_str = format!("{given_figure_type}");

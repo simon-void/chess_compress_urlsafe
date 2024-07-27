@@ -1,4 +1,8 @@
-pub mod base;
+mod base;
 mod figure;
 mod game;
-pub mod compression;
+mod compression;
+
+pub use base::*;
+pub use compression::*;
+pub use figure::figure::FigureType;
