@@ -307,7 +307,7 @@ impl GameState {
                         } else {
                             KingSide
                         };
-                        MoveType::Castling { c_type: castling_type, king_move: effective_king_move, rook_move: rook_move }
+                        MoveType::Castling { castling_type: castling_type, king_move: effective_king_move, rook_move: rook_move }
                     } else {
                         MoveType::Normal
                     };

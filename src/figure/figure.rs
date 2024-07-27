@@ -95,17 +95,22 @@ pub enum FigureType {
     King,
 }
 
-impl Display for FigureType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let symbol = match self {
+impl FigureType {
+    pub fn as_encoded(&self) -> char {
+        match self {
             Pawn => 'P',
             Rook => 'R',
             Knight => 'N',
             Bishop => 'B',
             Queen => 'Q',
             King => 'K',
-        };
-        write!(f,"{}", symbol)
+        }
+    }
+}
+
+impl Display for FigureType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f,"{}", self.as_encoded())
     }
 }
 

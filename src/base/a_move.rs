@@ -75,7 +75,7 @@ impl MoveData {
             figure_moved: FigureType::King,
             figure_captured: None,
             move_type: Castling {
-                c_type: castling_type,
+                castling_type: castling_type,
                 king_move: FromTo::new(king_from, king_to),
                 rook_move: FromTo::new(rook_from, rook_to),
             },
@@ -311,13 +311,13 @@ impl Display for MoveType {
             PawnPromotion { promoted_to } => {
                 match promoted_to {
                     PromotionType::Rook => {"R"}
-                    PromotionType::Knight => {"K"}
+                    PromotionType::Knight => {"N"}
                     PromotionType::Bishop => {"B"}
                     PromotionType::Queen => {"Q"}
                 }
             }
             EnPassant { .. } => {"e"}
-            Castling { c_type, .. } => {match c_type {
+            Castling { castling_type: c_type, .. } => {match c_type {
                 CastlingType::KingSide => {"c"}
                 CastlingType::QueenSide => {"C"}
             }}
@@ -331,7 +331,7 @@ pub enum MoveType {
     Normal,
     PawnPromotion{ promoted_to: PromotionType },
     EnPassant { captured_pawn_pos: Position },
-    Castling { c_type: CastlingType, king_move: FromTo, rook_move: FromTo }
+    Castling { castling_type: CastlingType, king_move: FromTo, rook_move: FromTo }
 }
 
 
