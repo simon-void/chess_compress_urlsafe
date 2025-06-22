@@ -11,8 +11,7 @@ pub fn compress(moves: Vec<Move>) -> Result<String, ChessError> {
     let mut game_state = GameState::classic();
     let mut encoded_moves = String::with_capacity(moves.len()*2);
 
-    let mut half_move_index = 0;
-    for next_move in moves.into_iter() {
+    for (half_move_index, next_move) in moves.into_iter().enumerate() {
         let active_color = game_state.turn_by;
         let target_pos = next_move.from_to.to;
         let from_pos_can_be_dropped = {
@@ -56,7 +55,6 @@ pub fn compress(moves: Vec<Move>) -> Result<String, ChessError> {
         };
 
         game_state = game_state.do_move(next_move).0;
-        half_move_index = half_move_index + 1;
     }
 
     Ok(encoded_moves)

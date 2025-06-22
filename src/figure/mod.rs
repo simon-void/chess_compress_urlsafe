@@ -1,2 +1,2 @@
 pub(crate) mod functions;
-pub mod figure;
+pub mod a_figure;

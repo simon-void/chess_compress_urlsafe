@@ -23,11 +23,7 @@ pub fn decompress(base64_encoded_match: &str) -> Result<(Vec<PositionData>, Vec<
     let mut encoded_chars: Chars = base64_encoded_match.chars();
     let mut game_state = GameState::classic();
     let mut moves_played: Vec<MoveData> = Vec::new();
-    let mut positions_reached: Vec<PositionData> = {
-        let mut positions_data = Vec::new();
-        positions_data.push(PositionData::new(game_state.get_fen()));
-        positions_data
-    };
+    let mut positions_reached: Vec<PositionData> = vec![PositionData::new(game_state.get_fen())];
 
     let mut half_move_index = 0;
     loop {
@@ -101,7 +97,7 @@ pub fn decompress(base64_encoded_match: &str) -> Result<(Vec<PositionData>, Vec<
         game_state = new_game_state;
         positions_reached.push(PositionData::new(game_state.get_fen()));
         moves_played.push(latest_move_data);
-        half_move_index = half_move_index + 1;
+        half_move_index += 1;
     }
 
     Ok((positions_reached, moves_played))

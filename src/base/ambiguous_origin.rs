@@ -25,7 +25,7 @@ pub fn is_origin_of_move_ambiguous(board_before_move: &Board, from_to: FromTo) -
         Pawn => {
             if from_to.from.column != from_to.to.column {
                 let other_pawn_column = from_to.from.column + 2 * (from_to.to.column - from_to.from.column);
-                if other_pawn_column >= 0 && other_pawn_column < 8 {
+                if (0..8).contains(&other_pawn_column) {
                     let other_pawn_pos = Position::new_unchecked(other_pawn_column, from_to.from.row);
                     if board_before_move.contains_figure(other_pawn_pos, Pawn, moving_figure.color) {
                         return OriginStatus::ColumnIsAmbiguous;
@@ -102,7 +102,8 @@ fn is_origin_of_knight_move_ambiguous(board: &Board, from_to: FromTo, knight_col
     get_ambiguous_status(from_to.from, &alt_knight_pos)
 }
 
-fn get_ambiguous_status(pos: Position, vec_of_alt_pos: &Vec<Position>) -> OriginStatus {
+#[allow(clippy::collapsible_else_if)]
+fn get_ambiguous_status(pos: Position, vec_of_alt_pos: &[Position]) -> OriginStatus {
     let alt_pos_with_same_column_found = vec_of_alt_pos.iter().any(|&alt_pos|{alt_pos.column==pos.column});
     let alt_pos_with_same_row_found = vec_of_alt_pos.iter().any(|&alt_pos|{alt_pos.row==pos.row});
     if alt_pos_with_same_column_found {

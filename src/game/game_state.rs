@@ -7,7 +7,7 @@ use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::ambiguous_origin::{is_origin_of_move_ambiguous, OriginStatus};
 use crate::base::position::Position;
 use crate::base::util::Disallowable;
-use crate::figure::figure::{Figure, FigureAndPosition, FigureType};
+use crate::figure::a_figure::{Figure, FigureAndPosition, FigureType};
 use crate::game::board::{Board, CaptureInfoOption};
 
 #[derive(Clone, Debug)]
@@ -234,7 +234,7 @@ impl GameState {
                 kind: ErrorKind::IllegalFormat,
             })
         }
-        return Ok(false);
+        Ok(false)
     }
 
     // TODO change return type to Result<(GameState, Move), ChessError>
@@ -310,11 +310,11 @@ impl GameState {
                         } else {
                             KingSide
                         };
-                        MoveType::Castling { castling_type: castling_type, king_move: effective_king_move, rook_move: rook_move }
+                        MoveType::Castling { castling_type, king_move: effective_king_move, rook_move }
                     } else {
                         MoveType::Normal
                     };
-                    stats.move_type = move_type.into();
+                    stats.move_type = move_type;
                     stats
                 };
 

@@ -28,7 +28,7 @@ impl Display for Disallowable {
     }
 }
 
-pub fn vec_to_str<A: Display>(vec: &Vec<A>, separator: &str) -> String {
+pub fn vec_to_str<A: Display>(vec: &[A], separator: &str) -> String {
     format!("[{}]", vec.iter().map(|pos|format!("{pos}")).collect::<Vec<String>>().join(separator))
 }
 

@@ -13,6 +13,7 @@ impl Display for ChessError {
 }
 
 #[derive(Debug)]
+#[allow(clippy::enum_variant_names)]
 pub enum ErrorKind {
     IllegalConfig,
     IllegalFormat,

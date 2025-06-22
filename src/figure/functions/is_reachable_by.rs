@@ -5,7 +5,7 @@ use crate::base::color::Color;
 use crate::base::direction::{DIAGONAL_DIRECTIONS, Direction, STRAIGHT_DIRECTIONS};
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::position::Position;
-use crate::figure::figure::{Figure, FigureType};
+use crate::figure::a_figure::{Figure, FigureType};
 use crate::game::board::Board;
 use crate::game::game_state::GameState;
 
@@ -95,9 +95,9 @@ fn inner_get_positions_to_reach_target_from(
     // check pawn moves
     if (active_color== White && target.row>1) || (active_color== Black && target.row<6) {
         fn contains_active_pawn(pos: Option<Position>, active_color: Color, board: &Board) -> bool {
-            pos.map(
+            pos.and_then(
                 |pos| board.get_figure(pos)
-            ).flatten().map(
+            ).map(
                 |figure| { figure.fig_type == Pawn && figure.color == active_color }
             ).unwrap_or(false)
         }

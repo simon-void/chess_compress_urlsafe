@@ -5,4 +5,4 @@ mod compression;
 
 pub use base::*;
 pub use compression::*;
-pub use figure::figure::FigureType;
+pub use figure::a_figure::FigureType;

@@ -6,7 +6,7 @@ use std::hash::{Hash, Hasher};
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::a_move::MoveType::{Castling, EnPassant, Normal, PawnPromotion};
 use crate::base::ambiguous_origin::OriginStatus;
-use crate::figure::figure::FigureType;
+use crate::figure::a_figure::FigureType;
 
 // TODO MoveData should implement Claim as soon as it's added to the language.
 // see https://smallcultfollowing.com/babysteps/blog/2024/06/21/claim-auto-and-otherwise/
@@ -30,7 +30,7 @@ impl MoveData {
             given_from_to: given_move,
             figure_moved,
             figure_captured,
-            move_type: Normal.into(),
+            move_type: Normal,
             origin_status,
         }
     }
@@ -252,7 +252,7 @@ impl Default for Move {
     }
 }
 
-pub fn toggle_rows(moves: &Vec<Move>) -> Vec<Move> {
+pub fn toggle_rows(moves: &[Move]) -> Vec<Move> {
     moves.iter().map(|a_move| a_move.toggle_rows()).collect()
 }
 

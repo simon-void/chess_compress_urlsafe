@@ -3,7 +3,7 @@ use std::ops::Range;
 use crate::base::color::Color;
 use crate::base::direction::Direction;
 use crate::base::position::{I8_RANGE_07, Position};
-use crate::figure::figure::{Figure, FigureType};
+use crate::figure::a_figure::{Figure, FigureType};
 
 static WHITE_PAWN: Figure = Figure {fig_type:FigureType::Pawn, color: Color::White,};
 static WHITE_QUEEN_SIDE_ROOK: Figure = Figure {fig_type:FigureType::Rook, color: Color::White,};

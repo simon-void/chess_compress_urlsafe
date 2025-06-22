@@ -138,7 +138,7 @@ impl FromStr for FigureType {
 #[cfg(test)]
 mod tests {
     use rstest::*;
-    use crate::figure::figure::FigureType;
+    use crate::figure::a_figure::FigureType;
 
     #[rstest(
         given_figure_type,

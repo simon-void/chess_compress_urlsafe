@@ -1,6 +1,7 @@
 use std::cmp::max;
 use std::fmt;
 use std::fmt::Formatter;
+use std::hash::{Hash, Hasher};
 use std::iter::{Iterator};
 use std::ops::Range;
 use std::str;
@@ -9,7 +10,7 @@ use crate::base::direction::Direction;
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::game::board::{Board, FieldContent, USIZE_RANGE_063};
 
-#[derive(Copy, Clone, Eq, Hash)]
+#[derive(Copy, Clone, Eq)]
 pub struct Position {
     pub index: usize,
     pub column: i8,
@@ -143,8 +144,8 @@ impl Position {
         self.reachable_knight_positions(fig_color, board).count()
     }
 
-    pub fn reachable_directed_positions<'a, 'b>(
-        &'a self,
+    pub fn reachable_directed_positions<'b>(
+        &self,
         fig_color: Color,
         direction: Direction,
         board: &'b Board,
@@ -152,8 +153,8 @@ impl Position {
         DirectedPosIterator::new(*self, fig_color, direction, board)
     }
 
-    pub fn reachable_knight_positions<'a, 'b>(
-        &'a self,
+    pub fn reachable_knight_positions<'b>(
+        &self,
         knight_color: Color,
         board: &'b Board,
     ) -> KnightPosIterator<'b> {
@@ -254,6 +255,12 @@ impl PartialEq for Position {
     }
 }
 
+impl Hash for Position {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        state.write_usize(self.index);
+    }
+}
+
 impl fmt::Display for Position {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", (self.column + 97) as u8 as char, (self.row+49) as u8 as char)
@@ -293,15 +300,8 @@ impl Iterator for DirectedPosIterator<'_> {
     type Item = Position;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let latest_pos = match self.latest_position {
-            Some(pos) => pos,
-            None => return None,
-        };
-
-        let new_pos = match latest_pos.step(self.direction) {
-            Some(pos) => pos,
-            None => return None,
-        };
+        let latest_pos = self.latest_position?;
+        let new_pos = latest_pos.step(self.direction)?;
         let some_new_pos = Some(new_pos);
 
         match self.board.get_content_type(new_pos, self.moving_fig_color) {
