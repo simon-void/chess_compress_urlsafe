@@ -1,6 +1,6 @@
 [package]
 name = "chess_compress_urlsafe"
-version = "0.0.2"
+version = "1.0.0"
 authors = ["StephanS <simon.void+github@gmail.com>"]
 description = "de/compresses moves played in a chess game from/to a url-safe string"
 license = "MIT"
@@ -13,5 +13,5 @@ edition = "2024"
 
 [dev-dependencies]
 itertools = "0.14.0"
-rstest = "0.24.0"
+rstest = "0.25.0"
 rstest_reuse = "0.7.0"
