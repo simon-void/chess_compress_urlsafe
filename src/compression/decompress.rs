@@ -6,7 +6,7 @@ use crate::compression::base64::{assert_is_url_safe_base64, decode_base64};
 use crate::figure::functions::is_reachable_by::get_positions_to_reach_target_from;
 use crate::game::game_state::GameState;
 
-/// the length of Vec<PositionData> is 1 higher than the length of Vec<MoveData>, since the initial Position exist before the first move
+/// the length of Vec<PositionData> is 1 higher than the length of Vec<MoveData>, since the initial Position exists before the first move
 pub fn decompress(base64_encoded_match: &str) -> Result<(Vec<PositionData>, Vec<MoveData>), ChessError> {
     assert_is_url_safe_base64(base64_encoded_match)?;
 

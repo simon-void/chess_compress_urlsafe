@@ -5,6 +5,7 @@ use crate::base::position::Position;
 use std::hash::{Hash, Hasher};
 use crate::base::errors::{ChessError, ErrorKind};
 use crate::base::a_move::MoveType::{Castling, EnPassant, Normal, PawnPromotion};
+use crate::base::ambiguous_origin::OriginStatus;
 use crate::figure::figure::FigureType;
 
 // TODO MoveData should implement Claim as soon as it's added to the language.
@@ -15,6 +16,7 @@ pub struct MoveData {
     pub figure_moved: FigureType,
     pub figure_captured: Option<FigureType>,
     pub move_type: MoveType, // TODO: make this a Box<MoveType> or Rc<MoveType> together with a static lifetime instance of Rc/Box<MoveType::Normal>
+    pub origin_status: OriginStatus,
 }
 
 impl MoveData {
@@ -22,22 +24,28 @@ impl MoveData {
         given_move: FromTo,
         figure_moved: FigureType,
         figure_captured: Option<FigureType>,
+        origin_status: OriginStatus,
     ) -> MoveData {
         MoveData {
             given_from_to: given_move,
             figure_moved,
             figure_captured,
-            move_type: Normal.into()
+            move_type: Normal.into(),
+            origin_status,
         }
     }
 
-    pub fn new_en_passant(given_move: FromTo) -> MoveData {
+    pub fn new_en_passant(
+        given_move: FromTo,
+        origin_status: OriginStatus,
+    ) -> MoveData {
         let captured_pawn_pos= Position::new_unchecked(given_move.to.column, given_move.from.row);
         MoveData {
             given_from_to: given_move,
             figure_moved: FigureType::Pawn,
             figure_captured: Some(FigureType::Pawn),
             move_type: EnPassant {captured_pawn_pos},
+            origin_status,
         }
     }
 
@@ -45,12 +53,14 @@ impl MoveData {
         given_move: FromTo,
         figure_captured: Option<FigureType>,
         promotion_type: PromotionType,
+        origin_status: OriginStatus,
     ) -> MoveData {
         MoveData {
             given_from_to: given_move,
             figure_moved: FigureType::Pawn,
             figure_captured,
             move_type: PawnPromotion { promoted_to: promotion_type },
+            origin_status,
         }
     }
 
@@ -75,10 +85,11 @@ impl MoveData {
             figure_moved: FigureType::King,
             figure_captured: None,
             move_type: Castling {
-                castling_type: castling_type,
+                castling_type,
                 king_move: FromTo::new(king_from, king_to),
                 rook_move: FromTo::new(rook_from, rook_to),
             },
+            origin_status: OriginStatus::Unambiguous
         }
     }
 
@@ -102,7 +113,7 @@ pub struct FromTo {
     pub to: Position,
 }
 
-#[allow(clippy::derive_hash_xor_eq)]
+#[allow(clippy::derived_hash_with_manual_eq)]
 impl Hash for FromTo {
     fn hash<H: Hasher>(&self, state: &mut H) {
         state.write_usize((self.from.index<< 6) + self.to.index);
@@ -198,7 +209,7 @@ impl str::FromStr for Move {
                 Ok(Move::new_with_promotion(from_to, pawn_move_type))
             }
             _ => {
-                return Err(ChessError {
+                Err(ChessError {
                     msg: format!("illegal move format: {}", code),
                     kind: ErrorKind::IllegalFormat,
                 })

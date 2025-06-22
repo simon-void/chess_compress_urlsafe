@@ -4,6 +4,7 @@ use crate::base::a_move::CastlingType::{KingSide, QueenSide};
 use crate::base::color::Color;
 use crate::base::direction::Direction;
 use crate::base::errors::{ChessError, ErrorKind};
+use crate::base::ambiguous_origin::{is_origin_of_move_ambiguous, OriginStatus};
 use crate::base::position::Position;
 use crate::base::util::Disallowable;
 use crate::figure::figure::{Figure, FigureAndPosition, FigureType};
@@ -277,6 +278,8 @@ impl GameState {
             }
         }
 
+        let origin_status = is_origin_of_move_ambiguous(&self.board, next_move.from_to);
+
         let (
             new_white_king_pos,
             new_black_king_pos,
@@ -300,7 +303,7 @@ impl GameState {
                 };
 
                 let king_move_stats = {
-                    let mut stats = MoveData::new(next_move.from_to, FigureType::King, figure_captured);
+                    let mut stats = MoveData::new(next_move.from_to, FigureType::King, figure_captured, OriginStatus::Unambiguous);
                     let move_type = if let Some(rook_move) = castling_rook_move {
                         let castling_type = if rook_move.to.column==3 {
                             QueenSide
@@ -369,7 +372,8 @@ impl GameState {
                     PawnMoveType::Promotion(promotion_type) => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
-                        let stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type);
+                        
+                        let stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type, origin_status);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -379,7 +383,7 @@ impl GameState {
                     PawnMoveType::SingleStep => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
-                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type());
+                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type(), origin_status);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -388,7 +392,7 @@ impl GameState {
                     },
                     PawnMoveType::DoubleStep => {
                         do_normal_move(&mut new_board, next_move.from_to);
-                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, None);
+                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, None, origin_status);
                         (
                             self.white_king_pos, self.black_king_pos,
                             Some(Position::new_unchecked(
@@ -400,7 +404,7 @@ impl GameState {
                     },
                     PawnMoveType::EnPassantIntercept => {
                         do_en_passant_move(&mut new_board, next_move.from_to);
-                        let a_move = MoveData::new_en_passant(next_move.from_to);
+                        let a_move = MoveData::new_en_passant(next_move.from_to, origin_status);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -415,7 +419,7 @@ impl GameState {
                     self.white_king_pos,
                     self.black_king_pos,
                     None,
-                    MoveData::new(next_move.from_to, moving_figure.fig_type, capture_info.get_captured_figure_type()),
+                    MoveData::new(next_move.from_to, moving_figure.fig_type, capture_info.get_captured_figure_type(), origin_status),
                 )
             },
         };

@@ -1,3 +1,4 @@
+use std::cmp::max;
 use std::fmt;
 use std::fmt::Formatter;
 use std::iter::{Iterator};
@@ -64,6 +65,10 @@ impl Position {
 
     pub fn get_row_distance(&self, other: Position) -> i8 {
         (self.row - other.row).abs()
+    }
+
+    pub fn touches(&self, other: Position) -> bool {
+        max((self.row - other.row).abs(), (self.column - other.column).abs()) == 1
     }
 
     pub fn step(&self, direction: Direction) -> Option<Position> {
@@ -135,28 +140,7 @@ impl Position {
         fig_color: Color,
         board: &Board,
     ) -> usize {
-        [
-            self.jump(2, -1),
-            self.jump(2, 1),
-            self.jump(-2, -1),
-            self.jump(-2, 1),
-            self.jump(1, -2),
-            self.jump(1, 2),
-            self.jump(-1, -2),
-            self.jump(-1, 2),
-        ].iter().fold(0, |count, opt_pos| {
-            count + match opt_pos {
-                None => { 1 }
-                Some(pos) => {
-                    match board.get_figure(*pos) {
-                        None => { 1 }
-                        Some(figure) => {
-                            if figure.color == fig_color { 0 } else { 1 }
-                        }
-                    }
-                }
-            }
-        })
+        self.reachable_knight_positions(fig_color, board).count()
     }
 
     pub fn reachable_directed_positions<'a, 'b>(
@@ -407,6 +391,9 @@ pub const I8_RANGE_07: Range<i8> = 0..8;
 mod tests {
     use super::*;
     use rstest::*;
+    use crate::game::game_state::GameState;
+
+    //♔♕♗♘♖♙♚♛♝♞♜♟
 
     #[rstest(
     column, row, expected_index,
@@ -480,5 +467,25 @@ mod tests {
 
         let actual_opt_direction = from.get_direction(to);
         assert_eq!(actual_opt_direction, expected_direction);
+    }
+
+    #[rstest(
+        game_state, knight_pos, expected_count,
+        case("white ♔e1 ♚e8", "a1", 2),
+        case("white ♔e1 ♚e8", "a8", 2),
+        case("black ♔e1 ♚e8", "h1", 2),
+        case("black ♔e1 ♚e8", "h8", 2),
+        case("black ♔e1 ♚e8", "d4", 8),
+        case("white ♔e1 ♘b3 ♚e8", "d4", 7),
+        case("white ♔e1 ♘b3 ♚e8 ♞b5", "d4", 7),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_count_reachable_knight_positions(
+        game_state: GameState,
+        knight_pos: Position,
+        expected_count: usize,
+    ) {
+        let actual_count = knight_pos.count_reachable_knight_positions(game_state.turn_by, &game_state.board);
+        assert_eq!(actual_count, expected_count);
     }
 }

@@ -34,6 +34,27 @@ pub fn get_positions_to_reach_target_from(
     Ok(origins)
 }
 
+pub fn find_first_active_figure_on_line_from(start: Position, direction: Direction, active_color: Color, board: &Board) -> Option<FoundFigure> {
+    let mut current_pos = start;
+    loop {
+        if let Some(pos) = current_pos.step(direction) {
+            if let Some(figure) = board.get_figure(pos) {
+                return if figure.color == active_color {
+                    Some(FoundFigure {
+                        figure_type: figure.fig_type,
+                        position: pos,
+                    })
+                } else {
+                    None
+                };
+            };
+            current_pos = pos;
+        } else {
+            return None;
+        }
+    }
+}
+
 fn inner_get_positions_to_reach_target_from(
     target: Position,
     active_color: Color,
@@ -42,46 +63,22 @@ fn inner_get_positions_to_reach_target_from(
 ) -> Vec<Position> {
     let mut result = Vec::<Position>::with_capacity(4);
 
-    fn find_first_active_figure_on(start: Position, direction: Direction, active_color: Color, board: &Board) -> Option<FoundFigure> {
-        let mut current_pos = start;
-        let mut distance: usize = 1;
-        loop {
-            if let Some(pos) = current_pos.step(direction) {
-                if let Some(figure) = board.get_figure(pos) {
-                    return if figure.color == active_color {
-                        Some(FoundFigure {
-                            figure_type: figure.fig_type,
-                            position: pos,
-                            distance,
-                        })
-                    } else {
-                        None
-                    };
-                };
-                distance = distance + 1;
-                current_pos = pos;
-            } else {
-                return None;
-            }
-        }
-    }
-
     // check bishop, rook, queen, king moves (only normal king moves, no castling)
     {
         STRAIGHT_DIRECTIONS.iter().for_each(|&direction| {
-            if let Some(found_figure) = find_first_active_figure_on(target, direction, active_color, board) {
+            if let Some(found_figure) = find_first_active_figure_on_line_from(target, direction, active_color, board) {
                 match found_figure.figure_type {
                     Rook | Queen => { result.push(found_figure.position) }
-                    King if found_figure.distance == 1 => { result.push(found_figure.position) }
+                    King if found_figure.position.touches(target) => { result.push(found_figure.position) }
                     _ => {}
                 };
             };
         });
         DIAGONAL_DIRECTIONS.iter().for_each(|&direction| {
-            if let Some(found_figure) = find_first_active_figure_on(target, direction, active_color, board) {
+            if let Some(found_figure) = find_first_active_figure_on_line_from(target, direction, active_color, board) {
                 match found_figure.figure_type {
                     Bishop | Queen => { result.push(found_figure.position) }
-                    King if found_figure.distance == 1 => { result.push(found_figure.position) }
+                    King if found_figure.position.touches(target) => { result.push(found_figure.position) }
                     _ => {}
                 };
             };
@@ -146,10 +143,9 @@ fn inner_get_positions_to_reach_target_from(
     result
 }
 
-struct FoundFigure {
-    figure_type: FigureType,
-    position: Position,
-    distance: usize,
+pub struct FoundFigure {
+    pub figure_type: FigureType,
+    pub position: Position,
 }
 
 //------------------------------Tests------------------------
