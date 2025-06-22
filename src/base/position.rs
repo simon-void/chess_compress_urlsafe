@@ -63,6 +63,14 @@ impl Position {
     pub fn from_code(code: &str) -> Position {
         code.parse::<Position>().unwrap_or_else(|_| panic!("illegal Position code: {}", code))
     }
+    
+    pub fn column_char(&self) -> char {
+        (self.column + 97) as u8 as char
+    }
+
+    pub fn row_char(&self) -> char {
+        (self.row + 49) as u8 as char
+    }
 
     pub fn get_row_distance(&self, other: Position) -> i8 {
         (self.row - other.row).abs()
@@ -263,7 +271,7 @@ impl Hash for Position {
 
 impl fmt::Display for Position {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "{}{}", (self.column + 97) as u8 as char, (self.row+49) as u8 as char)
+        write!(f, "{}{}", self.column_char(), self.row_char())
     }
 }
 
