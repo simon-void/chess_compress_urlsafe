@@ -9,6 +9,7 @@ use crate::base::position::Position;
 use crate::base::util::Disallowable;
 use crate::figure::a_figure::{Figure, FigureAndPosition, FigureType};
 use crate::game::board::{Board, CaptureInfoOption};
+use crate::game::is_check::is_check;
 
 #[derive(Clone, Debug)]
 pub struct GameState {
@@ -294,16 +295,17 @@ impl GameState {
                     _ => false,
                 };
 
-                let (effective_king_move, figure_captured, castling_rook_move) = if is_castling {
+                let (effective_king_move, figure_captured, castling_rook_move, is_check) = if is_castling {
                     let (king_move, rook_move) = do_castling_move(&mut new_board, next_move.from_to, moving_figure.color);
-                    (king_move, None, Some(rook_move))
+                    let is_check = is_check(&new_board, self.get_passive_king_pos());
+                    (king_move, None, Some(rook_move), is_check)
                 } else {
                     let capture_info = do_normal_move(&mut new_board, next_move.from_to);
-                    (next_move.from_to, capture_info.get_captured_figure_type(), None)
+                    (next_move.from_to, capture_info.get_captured_figure_type(), None, false)
                 };
 
                 let king_move_stats = {
-                    let mut stats = MoveData::new(next_move.from_to, FigureType::King, figure_captured, OriginStatus::Unambiguous);
+                    let mut stats = MoveData::new(next_move.from_to, FigureType::King, figure_captured, OriginStatus::Unambiguous, is_check);
                     let move_type = if let Some(rook_move) = castling_rook_move {
                         let castling_type = if rook_move.to.column==3 {
                             QueenSide
@@ -368,12 +370,14 @@ impl GameState {
                     }
                 }
 
+                let is_check = is_check(&new_board, self.get_passive_king_pos());
+
                 match compute_pawn_move_type(self, next_move) {
                     PawnMoveType::Promotion(promotion_type) => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
                         
-                        let stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type, origin_status);
+                        let stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type, origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -383,7 +387,7 @@ impl GameState {
                     PawnMoveType::SingleStep => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
-                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type(), origin_status);
+                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type(), origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -392,7 +396,7 @@ impl GameState {
                     },
                     PawnMoveType::DoubleStep => {
                         do_normal_move(&mut new_board, next_move.from_to);
-                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, None, origin_status);
+                        let stats = MoveData::new(next_move.from_to, FigureType::Pawn, None, origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
                             Some(Position::new_unchecked(
@@ -404,7 +408,7 @@ impl GameState {
                     },
                     PawnMoveType::EnPassantIntercept => {
                         do_en_passant_move(&mut new_board, next_move.from_to);
-                        let a_move = MoveData::new_en_passant(next_move.from_to, origin_status);
+                        let a_move = MoveData::new_en_passant(next_move.from_to, origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
                             None,
@@ -415,11 +419,12 @@ impl GameState {
             },
             _ => {
                 let capture_info = do_normal_move(&mut new_board, next_move.from_to);
+                let is_check = is_check(&new_board, self.get_passive_king_pos());
                 (
                     self.white_king_pos,
                     self.black_king_pos,
                     None,
-                    MoveData::new(next_move.from_to, moving_figure.fig_type, capture_info.get_captured_figure_type(), origin_status),
+                    MoveData::new(next_move.from_to, moving_figure.fig_type, capture_info.get_captured_figure_type(), origin_status, is_check),
                 )
             },
         };
@@ -451,7 +456,7 @@ impl GameState {
     pub fn get_fen(&self) -> String {
         let mut fen = self.get_fen_part1to4();
         fen.push(' ');
-        fen.push_str((self.moves_played_data.half_moves_played_without_progress).to_string().as_str());
+        fen.push_str(self.moves_played_data.half_moves_played_without_progress.to_string().as_str());
         fen.push(' ');
         fen.push_str(self.moves_played_data.current_round().to_string().as_str());
         fen
@@ -877,7 +882,7 @@ mod tests {
 
     fn get_latest_move_data_after(moves: Vec<Move>) -> MoveData {
         let mut latest_game_state = GameState::classic();
-        let mut latest_move_data = MoveData::new_castling("e1h1".parse::<FromTo>().unwrap());
+        let mut latest_move_data = MoveData::new_castling("e1h1".parse::<FromTo>().unwrap(), false);
         for next_move in moves {
             (latest_game_state, latest_move_data) = latest_game_state.do_move(next_move);
         };

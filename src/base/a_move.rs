@@ -1,5 +1,5 @@
 use std::fmt;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
 use std::str;
 use crate::base::position::Position;
 use std::hash::{Hash, Hasher};
@@ -17,6 +17,7 @@ pub struct MoveData {
     pub figure_captured: Option<FigureType>,
     pub move_type: MoveType, // TODO: make this a Box<MoveType> or Rc<MoveType> together with a static lifetime instance of Rc/Box<MoveType::Normal>
     pub origin_status: OriginStatus,
+    pub is_check: bool,
 }
 
 impl MoveData {
@@ -25,6 +26,7 @@ impl MoveData {
         figure_moved: FigureType,
         figure_captured: Option<FigureType>,
         origin_status: OriginStatus,
+        is_check: bool,
     ) -> MoveData {
         MoveData {
             given_from_to: given_move,
@@ -32,12 +34,14 @@ impl MoveData {
             figure_captured,
             move_type: Normal,
             origin_status,
+            is_check,
         }
     }
 
     pub fn new_en_passant(
         given_move: FromTo,
         origin_status: OriginStatus,
+        is_check: bool,
     ) -> MoveData {
         let captured_pawn_pos= Position::new_unchecked(given_move.to.column, given_move.from.row);
         MoveData {
@@ -46,6 +50,7 @@ impl MoveData {
             figure_captured: Some(FigureType::Pawn),
             move_type: EnPassant {captured_pawn_pos},
             origin_status,
+            is_check,
         }
     }
 
@@ -54,6 +59,7 @@ impl MoveData {
         figure_captured: Option<FigureType>,
         promotion_type: PromotionType,
         origin_status: OriginStatus,
+        is_check: bool,
     ) -> MoveData {
         MoveData {
             given_from_to: given_move,
@@ -61,11 +67,13 @@ impl MoveData {
             figure_captured,
             move_type: PawnPromotion { promoted_to: promotion_type },
             origin_status,
+            is_check,
         }
     }
 
     pub fn new_castling(
-        given_move: FromTo
+        given_move: FromTo,
+        is_check: bool,
     ) -> MoveData {
         let king_from: Position = given_move.from;
         let rook_from: Position = given_move.to;
@@ -89,7 +97,8 @@ impl MoveData {
                 king_move: FromTo::new(king_from, king_to),
                 rook_move: FromTo::new(rook_from, rook_to),
             },
-            origin_status: OriginStatus::Unambiguous
+            origin_status: OriginStatus::Unambiguous,
+            is_check,
         }
     }
 
@@ -151,13 +160,13 @@ impl str::FromStr for FromTo {
     }
 }
 
-impl fmt::Display for FromTo {
+impl Display for FromTo {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}{}", self.from, self.to)
     }
 }
 
-impl fmt::Debug for FromTo {
+impl Debug for FromTo {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
     }
@@ -228,7 +237,7 @@ impl Display for Move {
     }
 }
 
-impl fmt::Debug for Move {
+impl Debug for Move {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self)
     }

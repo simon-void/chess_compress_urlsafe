@@ -1,6 +1,6 @@
 [package]
 name = "chess_compress_urlsafe"
-version = "1.0.3"
+version = "1.1.0"
 authors = ["StephanS <simon.void+github@gmail.com>"]
 description = "de/compresses moves played in a chess game from/to a url-safe string"
 license = "MIT"
