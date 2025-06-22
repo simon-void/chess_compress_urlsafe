@@ -370,12 +370,11 @@ impl GameState {
                     }
                 }
 
-                let is_check = is_check(&new_board, self.get_passive_king_pos());
-
                 match compute_pawn_move_type(self, next_move) {
                     PawnMoveType::Promotion(promotion_type) => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
+                        let is_check = is_check(&new_board, self.get_passive_king_pos());
                         
                         let stats = MoveData::new_pawn_promotion(next_move.from_to, capture_info.get_captured_figure_type(), promotion_type, origin_status, is_check);
                         (
@@ -387,6 +386,8 @@ impl GameState {
                     PawnMoveType::SingleStep => {
                         let capture_info: CaptureInfoOption = do_normal_move(&mut new_board, next_move.from_to);
                         handle_pawn_promotion_after_move(&mut new_board, next_move, self.turn_by);
+                        let is_check = is_check(&new_board, self.get_passive_king_pos());
+                        
                         let stats = MoveData::new(next_move.from_to, FigureType::Pawn, capture_info.get_captured_figure_type(), origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
@@ -396,6 +397,8 @@ impl GameState {
                     },
                     PawnMoveType::DoubleStep => {
                         do_normal_move(&mut new_board, next_move.from_to);
+                        let is_check = is_check(&new_board, self.get_passive_king_pos());
+                        
                         let stats = MoveData::new(next_move.from_to, FigureType::Pawn, None, origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
@@ -408,6 +411,8 @@ impl GameState {
                     },
                     PawnMoveType::EnPassantIntercept => {
                         do_en_passant_move(&mut new_board, next_move.from_to);
+                        let is_check = is_check(&new_board, self.get_passive_king_pos());
+                        
                         let a_move = MoveData::new_en_passant(next_move.from_to, origin_status, is_check);
                         (
                             self.white_king_pos, self.black_king_pos,
@@ -445,7 +450,6 @@ impl GameState {
         )
     }
 
-    #[allow(dead_code)]
     fn get_passive_king_pos(&self) -> Position {
         match self.turn_by {
             Color::Black => {self.white_king_pos}
@@ -953,5 +957,25 @@ mod tests {
         };
 
         assert_eq!(latest_move_data.figure_moved, expected_figure_type, "moves made: {}", moves_made);
+    }
+
+    //♔♕♗♘♖♙♚♛♝♞♜♟
+
+    #[rstest(
+        game_state, next_move, expected_is_check,
+        case("black ♔e2 ♟f4 ♚e8", "f4f3", true),
+        case("black ♔e2 ♟f2 ♚e8", "f2f1Q", true),
+        case("black ♔e2 ♟g2 ♚e8", "g2g1N", true),
+        case("black ♔e2 ♟g4 ♙f3 ♚e8", "g4f3", true),
+        case("black ♔e2 ♛f4 ♚e8", "f4f3", true),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_is_check_after_move(
+        game_state: GameState,
+        next_move: Move,
+        expected_is_check: bool,
+    ) {
+        let actual_is_check = game_state.do_move(next_move).1.is_check;
+        assert_eq!(actual_is_check, expected_is_check);
     }
 }

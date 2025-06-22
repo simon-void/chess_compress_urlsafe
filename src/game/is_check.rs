@@ -13,7 +13,7 @@ pub fn is_check(board: &Board, king_pos: Position) -> bool {
         let figure = board.get_figure(king_pos).unwrap_or_else(|| panic!("no figure on board on position {}! board: {}", king_pos, board));
         if figure.fig_type != King {
             panic!("given position {} leads to a {}, not a King on board: {}", king_pos, figure.fig_type, board);
-        } 
+        }
         figure.color.toggle()
     };
 
@@ -57,4 +57,108 @@ pub fn is_check(board: &Board, king_pos: Position) -> bool {
     }
 
     false
+}
+
+
+//------------------------------Tests------------------------
+
+#[cfg(test)]
+mod tests {
+    use rstest::*;
+    use crate::base::position::Position;
+    use crate::game::game_state::GameState;
+    use crate::game::is_check::is_check;
+    //♔♕♗♘♖♙♚♛♝♞♜♟
+
+    #[rstest(
+        game_state, king_pos, expected_is_check,
+        case("white ♔e3 ♟f4 ♚e8", "e3", true),
+        case("white ♔e3 ♟d4 ♚e8", "e3", true),
+        case("white ♔e3 ♟e4 ♚e8", "e3", false),
+        case("white ♔e3 ♟d3 ♚e8", "e3", false),
+        case("white ♔e3 ♟f3 ♚e8", "e3", false),
+        case("white ♔e3 ♟f2 ♚e8", "e3", false),
+        case("white ♔e3 ♟e2 ♚e8", "e3", false),
+        case("white ♔e3 ♟d2 ♚e8", "e3", false),
+        case("white ♔e3 ♟g5 ♚e8", "e3", false),
+        case("white ♔e3 ♟c5 ♚e8", "e3", false),
+
+        case("white ♔e3 ♜c5 ♚e8", "e3", false),
+        case("white ♔e3 ♜d5 ♚e8", "e3", false),
+        case("white ♔e3 ♜e5 ♚e8", "e3", true),
+        case("white ♔e3 ♜f5 ♚e8", "e3", false),
+        case("white ♔e3 ♜g5 ♚e8", "e3", false),
+        case("white ♔e3 ♜c4 ♚e8", "e3", false),
+        case("white ♔e3 ♜c3 ♚e8", "e3", true),
+        case("white ♔e3 ♜c2 ♚e8", "e3", false),
+        case("white ♔e3 ♜g4 ♚e8", "e3", false),
+        case("white ♔e3 ♜g3 ♚e8", "e3", true),
+        case("white ♔e3 ♜g2 ♚e8", "e3", false),
+        case("white ♔e3 ♜c1 ♚e8", "e3", false),
+        case("white ♔e3 ♜d1 ♚e8", "e3", false),
+        case("white ♔e3 ♜e1 ♚e8", "e3", true),
+        case("white ♔e3 ♜f1 ♚e8", "e3", false),
+        case("white ♔e3 ♜g1 ♚e8", "e3", false),
+
+        case("white ♔e3 ♞c5 ♚e8", "e3", false),
+        case("white ♔e3 ♞d5 ♚e8", "e3", true),
+        case("white ♔e3 ♞e5 ♚e8", "e3", false),
+        case("white ♔e3 ♞f5 ♚e8", "e3", true),
+        case("white ♔e3 ♞g5 ♚e8", "e3", false),
+        case("white ♔e3 ♞c4 ♚e8", "e3", true),
+        case("white ♔e3 ♞c3 ♚e8", "e3", false),
+        case("white ♔e3 ♞c2 ♚e8", "e3", true),
+        case("white ♔e3 ♞g4 ♚e8", "e3", true),
+        case("white ♔e3 ♞g3 ♚e8", "e3", false),
+        case("white ♔e3 ♞g2 ♚e8", "e3", true),
+        case("white ♔e3 ♞c1 ♚e8", "e3", false),
+        case("white ♔e3 ♞d1 ♚e8", "e3", true),
+        case("white ♔e3 ♞e1 ♚e8", "e3", false),
+        case("white ♔e3 ♞f1 ♚e8", "e3", true),
+        case("white ♔e3 ♞g1 ♚e8", "e3", false),
+
+        case("white ♔e3 ♝c5 ♚e8", "e3", true),
+        case("white ♔e3 ♝d5 ♚e8", "e3", false),
+        case("white ♔e3 ♝e5 ♚e8", "e3", false),
+        case("white ♔e3 ♝f5 ♚e8", "e3", false),
+        case("white ♔e3 ♝g5 ♚e8", "e3", true),
+        case("white ♔e3 ♝c4 ♚e8", "e3", false),
+        case("white ♔e3 ♝c3 ♚e8", "e3", false),
+        case("white ♔e3 ♝c2 ♚e8", "e3", false),
+        case("white ♔e3 ♝g4 ♚e8", "e3", false),
+        case("white ♔e3 ♝g3 ♚e8", "e3", false),
+        case("white ♔e3 ♝g2 ♚e8", "e3", false),
+        case("white ♔e3 ♝c1 ♚e8", "e3", true),
+        case("white ♔e3 ♝d1 ♚e8", "e3", false),
+        case("white ♔e3 ♝e1 ♚e8", "e3", false),
+        case("white ♔e3 ♝f1 ♚e8", "e3", false),
+        case("white ♔e3 ♝g1 ♚e8", "e3", true),
+
+        case("white ♔e3 ♛c5 ♚e8", "e3", true),
+        case("white ♔e3 ♛d5 ♚e8", "e3", false),
+        case("white ♔e3 ♛e5 ♚e8", "e3", true),
+        case("white ♔e3 ♛f5 ♚e8", "e3", false),
+        case("white ♔e3 ♛g5 ♚e8", "e3", true),
+        case("white ♔e3 ♛c4 ♚e8", "e3", false),
+        case("white ♔e3 ♛c3 ♚e8", "e3", true),
+        case("white ♔e3 ♛c2 ♚e8", "e3", false),
+        case("white ♔e3 ♛g4 ♚e8", "e3", false),
+        case("white ♔e3 ♛g3 ♚e8", "e3", true),
+        case("white ♔e3 ♛g2 ♚e8", "e3", false),
+        case("white ♔e3 ♛c1 ♚e8", "e3", true),
+        case("white ♔e3 ♛d1 ♚e8", "e3", false),
+        case("white ♔e3 ♛e1 ♚e8", "e3", true),
+        case("white ♔e3 ♛f1 ♚e8", "e3", false),
+        case("white ♔e3 ♛g1 ♚e8", "e3", true),
+        ::trace //This leads to the arguments being printed in front of the test result.
+    )]
+    fn test_is_check(
+        game_state: GameState,
+        king_pos: Position,
+        expected_is_check: bool,
+    ) {
+        // game_state.
+        let actual_is_check = is_check(&game_state.board, king_pos);
+        assert_eq!(actual_is_check, expected_is_check);
+    }
 }
